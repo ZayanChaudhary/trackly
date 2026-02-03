@@ -49,3 +49,5 @@ yarn-error.*
 
 # VS Code
 .vscode/
+
+.env
