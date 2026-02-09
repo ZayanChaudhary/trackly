@@ -10,22 +10,23 @@ import {
   Platform,
 } from "react-native";
 import { supabase } from "../services/supabase";
-import { Animated } from 'react-native';
+import { Animated } from "react-native";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const fadeAnim = useState(new Animated.Value(0))[0];
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
-        toValue: 1, 
-        duration: 800,
-        useNativeDriver: true,
+      toValue: 1,
+      duration: 1000,
+      useNativeDriver: true,
     }).start();
-  }, [])
+  }, []);
 
   const handleAuth = async () => {
     if (!email || !password) {
@@ -33,20 +34,35 @@ export default function LoginScreen() {
       return;
     }
 
+    if (isSignUp && !name.trim()) {
+      Alert.alert("Error", "Please enter your name");
+      return;
+    }
+
     setLoading(true);
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
         });
 
         if (error) {
           Alert.alert("Sign Up Error", error.message);
-        } else {
+        } else if (data.user) {
+          const { error: profileError } = await supabase
+            .from("user_profiles")
+            .update({ display_name: name.trim() })
+            .eq("user_id", data.user.id);
+
+          if (profileError) {
+            console.error("Profile creation error:", profileError);
+          }
+
           Alert.alert("Success", "Account created! Please log in.");
           setIsSignUp(false);
+          setName("");
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -73,6 +89,16 @@ export default function LoginScreen() {
       <View style={styles.formContainer}>
         <Text style={styles.title}>Trackly</Text>
         <Text style={styles.subtitle}>Build better habits</Text>
+
+        {isSignUp && (
+          <TextInput
+            style={styles.input}
+            placeholder="Name"
+            value={name}
+            onChangeText={setName}
+            autoCapitalize="words"
+          />
+        )}
 
         <TextInput
           style={styles.input}

@@ -30,6 +30,7 @@ export interface UserProfile {
   id: string;
   user_id: string;
   username: string | null;
+  display_name: string | null;
   level: number;
   xp: number;
   total_xp: number;

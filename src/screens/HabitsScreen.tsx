@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   FlatList,
   RefreshControl,
+  Alert,
 } from "react-native";
 import { supabase } from "../services/supabase";
 import { Habit } from "../types/habit";
@@ -14,13 +15,36 @@ import { useFocusEffect } from "@react-navigation/native";
 export default function HabitsScreen({ navigation }: any) {
   const [habits, setHabits] = useState<Habit[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userName, setUsername] = useState("User");
 
   useFocusEffect(
     React.useCallback(() => {
       fetchHabits();
-    }, [])
+      fetchUserName();
+    }, []),
   );
 
+  const fetchUserName = async () => {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from("user_profles")
+        .select("display_name")
+        .eq("user_id", user.id)
+        .single();
+
+      if (profile?.display_name) {
+        setUsername(profile.display_name);
+      }
+    } catch (error) {
+      console.error("Error fetching user name:", error);
+    }
+  };
   const fetchHabits = async () => {
     try {
       const {
@@ -56,7 +80,7 @@ export default function HabitsScreen({ navigation }: any) {
       <View style={styles.habitHeader}>
         <Text style={styles.habitTitle}>{item.title}</Text>
         <View style={styles.streakBadge}>
-          <Text style={styles.streakText}>🔥 {item.streak}</Text>
+          <Text style={styles.streakText}>{item.streak}</Text>
         </View>
       </View>
       {item.description && (
@@ -68,13 +92,38 @@ export default function HabitsScreen({ navigation }: any) {
         </Text>
         <Text style={styles.pointsText}>⭐ {item.points} pts</Text>
       </View>
+
+      <TouchableOpacity
+        style={styles.completeButton}
+        onPress={() => handleCompleteHabit(item)}
+      >
+        <Text style={styles.completeButtonText}>Complete</Text>
+      </TouchableOpacity>
     </View>
   );
+
+  const handleCompleteHabit = async (habit: Habit) => {
+    const { completeHabit } = require("../services/habitService");
+
+    const result = await completeHabit(habit.id, habit.frequency, habit.streak);
+
+    if (result.success) {
+      Alert.alert(
+        result.leveledUp ? "Level Up!" : "Success",
+        result.leveledUp
+          ? `${result.message}\nYou reached level ${result.newLevel}!`
+          : result.message,
+      );
+      fetchHabits();
+    } else {
+      Alert.alert("Info", result.message);
+    }
+  };
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>My Habits</Text>
+        <Text style={styles.headerTitle}>{userName}'s Habits</Text>
         <TouchableOpacity onPress={handleSignOut}>
           <Text style={styles.signOutButton}>Sign Out</Text>
         </TouchableOpacity>
@@ -215,6 +264,18 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   addButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  completeButton: {
+    backgroundColor: "#34C759",
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 10,
+  },
+  completeButtonText: {
     color: "white",
     fontSize: 16,
     fontWeight: "600",
