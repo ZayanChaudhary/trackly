@@ -39,18 +39,21 @@ export const calcNewStreak = async (
     frequency: 'daily' | 'weekly',
     currentStreak: number
 ): Promise<number> => {
-    const {data: lastLog } = await supabase
+    const {data: logs } = await supabase
         .from('habit_logs')
         .select('completed_at')
         .eq('habit_id', habitId)
         .order('completed_at', { ascending: false })
-        .limit(1)
-        .single();
+        .limit(2)
     
-    if (!lastLog){
-        return 1
+    console.log('Logs found:', logs);
+
+    if (!logs || logs.length === 0) {
+        console.log('First completion');
+        return 1;
     }
 
+    const lastLog = logs[0]
     const lastCompletion = new Date(lastLog.completed_at);
     const now = new Date();
 
@@ -60,11 +63,13 @@ export const calcNewStreak = async (
         yesterday.setHours(0,0,0,0);
 
         const lastCompletionDate = new Date(lastCompletion);
-        lastCompletion.setHours(0,0,0,0);
+        lastCompletionDate.setHours(0,0,0,0);
 
         if(lastCompletionDate.getTime() === yesterday.getTime()) {
+            console.log('Continuing Streak')
             return currentStreak + 1;
         }else {
+            console.log('Resetting Streak')
             return 1;
         }
     }else {

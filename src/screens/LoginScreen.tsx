@@ -43,6 +43,7 @@ export default function LoginScreen() {
 
     try {
       if (isSignUp) {
+
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -51,14 +52,31 @@ export default function LoginScreen() {
         if (error) {
           Alert.alert("Sign Up Error", error.message);
         } else if (data.user) {
-          const { error: profileError } = await supabase
-            .from("user_profiles")
-            .update({ display_name: name.trim() })
-            .eq("user_id", data.user.id);
 
-          if (profileError) {
-            console.error("Profile creation error:", profileError);
-          }
+          await new Promise(resolve => setTimeout(resolve, 500));
+
+          const { data: existingProfile } = await supabase
+            .from("user_profiles")
+            .select('*')
+            .eq("user_id", data.user.id)
+            .single();
+
+          if (existingProfile) {
+                // Update existing profile
+                await supabase
+                    .from('user_profiles')
+                    .update({ display_name: name.trim() })
+                    .eq('user_id', data.user.id);
+            } else {
+                // Create new profile with name
+                await supabase
+                    .from('user_profiles')
+                    .insert({
+                    user_id: data.user.id,
+                    display_name: name.trim(),
+                    username: email,
+                    });
+            }
 
           Alert.alert("Success", "Account created! Please log in.");
           setIsSignUp(false);

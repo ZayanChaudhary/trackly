@@ -30,15 +30,27 @@ export default function HabitsScreen({ navigation }: any) {
         data: { user },
       } = await supabase.auth.getUser();
 
-      if (!user) return;
+        
+      console.log('=== DEBUG: Fetching user name ===');
+      console.log('User ID:', user?.id);
 
-      const { data: profile } = await supabase
-        .from("user_profles")
+      if (!user) {
+      console.log('No user found');
+      return;
+      }
+
+      const { data: profile, error } = await supabase
+        .from("user_profiles")
         .select("display_name")
         .eq("user_id", user.id)
         .single();
+      
+      console.log('Profile data:', profile);
+      console.log('Profile error:', error);
+      console.log('Display name value:', profile?.display_name);
 
       if (profile?.display_name) {
+        console.log('Settign username to:', profile.display_name)
         setUsername(profile.display_name);
       }
     } catch (error) {
