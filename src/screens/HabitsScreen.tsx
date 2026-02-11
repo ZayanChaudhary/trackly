@@ -7,6 +7,7 @@ import {
   FlatList,
   RefreshControl,
   Alert,
+  Image
 } from "react-native";
 import { supabase } from "../services/supabase";
 import { Habit } from "../types/habit";
@@ -99,10 +100,21 @@ export default function HabitsScreen({ navigation }: any) {
         <Text style={styles.habitDescription}>{item.description}</Text>
       )}
       <View style={styles.habitFooter}>
+      <View style={styles.frequencyContainer}>
+        <Image
+          source={
+            item.frequency === "daily"
+              ? require("../../assets/icons/DailyIcon.png")
+              : require("../../assets/icons/WeeklyIcon.png")
+          }
+          style={styles.frequencyIcon}
+          resizeMode="contain"
+        />
         <Text style={styles.frequencyText}>
-          {item.frequency === "daily" ? "📅 Daily" : "📆 Weekly"}
+          {item.frequency === "daily" ? "Daily" : "Weekly"}
         </Text>
-        <Text style={styles.pointsText}>⭐ {item.points} pts</Text>
+      </View>
+        <Text style={styles.pointsText}>{item.points} pts</Text>
       </View>
 
       <TouchableOpacity
@@ -219,7 +231,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   streakBadge: {
-    backgroundColor: "#FFF3E0",
+    backgroundColor: "#c7f1a1ff",
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
@@ -291,5 +303,14 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "600",
+  },
+  frequencyContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  frequencyIcon: {
+    width: 20,
+    height: 20,
+    marginRight: 6,
   },
 });
