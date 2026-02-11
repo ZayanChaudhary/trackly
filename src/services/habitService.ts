@@ -1,15 +1,43 @@
 import { supabase } from "./supabase";
 
-const XP_PER_LEVEL = 100;
+
+export const getXPRequiredForLevel = (level: number): number => {
+
+    return 100 * level;
+}
 
 export const calcLevel = (totalXP: number): number => {
-    return Math.floor(totalXP / XP_PER_LEVEL) + 1;
+  let level = 1;
+  let xpNeeded = 0;
+  
+  while (xpNeeded <= totalXP) {
+    xpNeeded += getXPRequiredForLevel(level);
+    if (xpNeeded <= totalXP) {
+      level++;
+    }
+  }
+  
+  return level;
 };
 
 export const getXPforNext = (currentXP: number): number => {
     const currentLevel = calcLevel(currentXP);
-    return currentLevel * XP_PER_LEVEL;
+    return getXPRequiredForLevel(currentLevel);
 };
+
+export const getCurrentLevelProgress = (totalXP: number): { currentXP: number; neededXP: number} => {
+    const currentLevel = calcLevel(totalXP);
+
+    let xpForCurrent = 0;
+    for (let i = 1; i < currentLevel; i++){
+        xpForCurrent += getXPRequiredForLevel(i);
+    }
+
+    const currentXP = totalXP - xpForCurrent;
+    const neededXP = getXPRequiredForLevel(currentLevel);
+
+    return { currentXP, neededXP}
+}
 
 export const checkCompleteToday = async (
     habitId: string,
@@ -84,12 +112,29 @@ export const calcNewStreak = async (
 };
 
 export const calcXPearned = (streak: number): number => {
-    let xp = 10;
-    if (streak >= 100) xp += 100;
-    else if (streak >= 30) xp += 50;
-    else if (streak >= 7) xp += 20;
+    
+    let minXP = 8;
+    let maxXP = 15;
+    
+    if (streak >= 100)
+    {
+        minXP = 50;
+        maxXP = 120;
+    }
+    else if (streak >= 30)
+    {
+        minXP = 30;
+        maxXP = 70;
+    }
+    else if (streak >= 7)
+    {
+        minXP = 15;
+        maxXP = 35;
+    }
 
-    return xp;
+    const randomXP = Math.floor(Math.random() * (maxXP - minXP + 1)) + minXP;
+
+    return randomXP;
 };
 
 export interface CompleteHabitResult {
@@ -189,13 +234,14 @@ export const completeHabit = async (
         const oldLevel = profile.level;
         const newTotalXP = profile.total_xp + xpEarned;
         const newLevel = calcLevel(newTotalXP);
-        const newXP = newTotalXP % XP_PER_LEVEL;
+
+        const {currentXP, neededXP} = getCurrentLevelProgress(newTotalXP);
 
 
         const { error: profileError } = await supabase
         .from('user_profiles')
         .update({
-            xp: newXP,
+            xp: currentXP,
             total_xp: newTotalXP,
             level: newLevel,
             updated_at: new Date().toISOString(),
