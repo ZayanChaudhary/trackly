@@ -176,7 +176,7 @@ export default function TimelineScreen() {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Rewards Timeline</Text>
+          <Text style={styles.headerTitle}>{}</Text>
         </View>
         <View style={styles.loadingContainer}>
           <Text>Loading...</Text>
@@ -188,7 +188,7 @@ export default function TimelineScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Rewards Timeline</Text>
+        <Text style={styles.headerTitle}>Your Path</Text>
         <Text style={styles.headerSubtitle}>
           Current Level: {currentLevel}
         </Text>
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
     height: 40,
   },
   lineUnlocked: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#179151',
   },
   lineLocked: {
     backgroundColor: '#E0E0E0',
@@ -267,15 +267,15 @@ const styles = StyleSheet.create({
     marginRight: 15,
   },
   circleUnlocked: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
+    backgroundColor: '#179151',
+    borderColor: '#179151',
   },
   circleLocked: {
     backgroundColor: '#F5F5F5',
     borderColor: '#E0E0E0',
   },
   circleCurrent: {
-    borderColor: '#FFD700',
+    borderColor: '#34C759',
     borderWidth: 4,
   },
   levelText: {
