@@ -160,13 +160,73 @@ export default function ProfileScreen() {
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Unlocked Accessories</Text>
-        <View style={styles.achievementsPlaceholder}>
-          <Text style={styles.placeholderText}>
-            Reach higher levels to unlock accessories! 
-          </Text>
-        </View>
+        <UnlockedAccessoriesList userId={profile.user_id} />
       </View>
     </ScrollView>
+  );
+}
+
+function UnlockedAccessoriesList({ userId }: { userId: string }) {
+  const [accessories, setAccessories] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchUnlockedAccessories();
+  }, []);
+
+  const fetchUnlockedAccessories = async () => {
+    try {
+      const { data } = await supabase
+        .from('user_accessories')
+        .select(`
+          accessory_id,
+          accessories (
+            id,
+            name,
+            type,
+            icon,
+            unlock_level
+          )
+        `)
+        .eq('user_id', userId);
+
+      const accessoryList = data?.map((item: any) => item.accessories) || [];
+      setAccessories(accessoryList);
+    } catch (error) {
+      console.error('Error fetching accessories:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.achievementsPlaceholder}>
+        <Text style={styles.placeholderText}>Loading...</Text>
+      </View>
+    );
+  }
+
+  if (accessories.length === 0) {
+    return (
+      <View style={styles.achievementsPlaceholder}>
+        <Text style={styles.placeholderText}>
+          Reach higher levels to unlock accessories!
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.accessoriesGrid}>
+      {accessories.map((accessory) => (
+        <View key={accessory.id} style={styles.accessoryCard}>
+          <Text style={styles.accessoryIcon}>{accessory.icon}</Text>
+          <Text style={styles.accessoryName}>{accessory.name}</Text>
+          <Text style={styles.accessoryLevel}>Level {accessory.unlock_level}</Text>
+        </View>
+      ))}
+    </View>
   );
 }
 
@@ -308,4 +368,33 @@ const styles = StyleSheet.create({
     color: "#666",
     textAlign: "center",
   },
+accessoriesGrid: {
+  flexDirection: 'row',
+  flexWrap: 'wrap',
+  gap: 10,
+},
+accessoryCard: {
+  backgroundColor: 'white',
+  padding: 15,
+  borderRadius: 12,
+  alignItems: 'center',
+  width: '48%',
+  borderWidth: 2,
+  borderColor: '#007AFF',
+},
+accessoryIcon: {
+  fontSize: 40,
+  marginBottom: 8,
+},
+accessoryName: {
+  fontSize: 14,
+  fontWeight: '600',
+  color: '#333',
+  textAlign: 'center',
+  marginBottom: 4,
+},
+accessoryLevel: {
+  fontSize: 12,
+  color: '#666',
+},
 });

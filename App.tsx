@@ -9,6 +9,7 @@ import LoginScreen from "./src/screens/LoginScreen";
 import HabitsScreen from "./src/screens/HabitsScreen";
 import AddHabitScreen from "./src/screens/AddHabitScreen";
 import ProfileScreen from "./src/screens/ProfileScreen";
+import TimelineScreen from "./src/screens/TimeLineScreen";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -33,12 +34,28 @@ function MainTabs() {
         options={{
           tabBarLabel: "Habits",
           tabBarIcon: ({ color, focused }) => (
-            <Image 
-            source={require('./assets/icons/HabitScreenIcon.png')}
-            style={{
-              width: 24,
-              height: 24,
+            <Image
+              source={require("./assets/icons/HabitScreenIcon.png")}
+              style={{
+                width: 24,
+                height: 24,
+              }}
+            />
+          ),
         }}
+      />
+      <Tab.Screen
+        name="TimelineTab"
+        component={TimelineScreen}
+        options={{
+          tabBarLabel: "Path",
+          tabBarIcon: ({ color, focused }) => (
+            <Image
+              source={require("./assets/icons/TimelineScreenIcon.png")}
+              style={{
+                width: 24,
+                height: 24,
+              }}
             />
           ),
         }}
@@ -49,14 +66,14 @@ function MainTabs() {
         options={{
           tabBarLabel: "Profile",
           tabBarIcon: ({ color, focused }) => (
-            <Image 
-            source={require('./assets/icons/ProfileScreenIcon.png')}
-            style={{
-              width: 24,
-              height: 24,
-        }}
+            <Image
+              source={require("./assets/icons/ProfileScreenIcon.png")}
+              style={{
+                width: 24,
+                height: 24,
+              }}
             />
-          )
+          ),
         }}
       />
     </Tab.Navigator>
