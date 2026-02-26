@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,57 +7,26 @@ import {
   FlatList,
   RefreshControl,
   Alert,
-  Image
-} from "react-native";
-import { supabase } from "../services/supabase";
-import { Habit } from "../types/habit";
-import { useFocusEffect } from "@react-navigation/native";
+  Animated,
+} from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import { supabase } from '../services/supabase';
+import { Habit } from '../types/habit';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function HabitsScreen({ navigation }: any) {
   const [habits, setHabits] = useState<Habit[]>([]);
   const [loading, setLoading] = useState(true);
-  const [userName, setUsername] = useState("User");
+  const [userName, setUserName] = useState('User');
+  const [selectedFilter, setSelectedFilter] = useState<'all' | 'daily' | 'weekly'>('all');
 
   useFocusEffect(
     React.useCallback(() => {
       fetchHabits();
       fetchUserName();
-    }, []),
+    }, [])
   );
 
-  const fetchUserName = async () => {
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-        
-      console.log('=== DEBUG: Fetching user name ===');
-      console.log('User ID:', user?.id);
-
-      if (!user) {
-      console.log('No user found');
-      return;
-      }
-
-      const { data: profile, error } = await supabase
-        .from("user_profiles")
-        .select("display_name")
-        .eq("user_id", user.id)
-        .single();
-      
-      console.log('Profile data:', profile);
-      console.log('Profile error:', error);
-      console.log('Display name value:', profile?.display_name);
-
-      if (profile?.display_name) {
-        console.log('Settign username to:', profile.display_name)
-        setUsername(profile.display_name);
-      }
-    } catch (error) {
-      console.error("Error fetching user name:", error);
-    }
-  };
   const fetchHabits = async () => {
     try {
       const {
@@ -67,20 +36,42 @@ export default function HabitsScreen({ navigation }: any) {
       if (!user) return;
 
       const { data, error } = await supabase
-        .from("habits")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+        .from('habits')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
       if (error) {
-        console.error("Error fetching habits:", error);
+        console.error('Error fetching habits:', error);
       } else {
         setHabits(data || []);
       }
     } catch (error) {
-      console.error("Error:", error);
+      console.error('Error:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchUserName = async () => {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('display_name')
+        .eq('user_id', user.id)
+        .single();
+
+      if (profile?.display_name) {
+        setUserName(profile.display_name);
+      }
+    } catch (error) {
+      console.error('Error fetching user name:', error);
     }
   };
 
@@ -88,96 +79,171 @@ export default function HabitsScreen({ navigation }: any) {
     await supabase.auth.signOut();
   };
 
-  const renderHabit = ({ item }: { item: Habit }) => (
-    <View style={styles.habitCard}>
-      <View style={styles.habitHeader}>
-        <Text style={styles.habitTitle}>{item.title}</Text>
-        <View style={styles.streakBadge}>
-          <Text style={styles.streakText}>{item.streak}</Text>
-        </View>
-      </View>
-      {item.description && (
-        <Text style={styles.habitDescription}>{item.description}</Text>
-      )}
-      <View style={styles.habitFooter}>
-      <View style={styles.frequencyContainer}>
-        <Image
-          source={
-            item.frequency === "daily"
-              ? require("../../assets/icons/DailyIcon.png")
-              : require("../../assets/icons/WeeklyIcon.png")
-          }
-          style={styles.frequencyIcon}
-          resizeMode="contain"
-        />
-        <Text style={styles.frequencyText}>
-          {item.frequency === "daily" ? "Daily" : "Weekly"}
-        </Text>
-      </View>
-        <Text style={styles.pointsText}>{item.points} pts</Text>
-      </View>
-
-      <TouchableOpacity
-        style={styles.completeButton}
-        onPress={() => handleCompleteHabit(item)}
-      >
-        <Text style={styles.completeButtonText}>Complete</Text>
-      </TouchableOpacity>
-    </View>
-  );
-
   const handleCompleteHabit = async (habit: Habit) => {
-    const { completeHabit } = require("../services/habitService");
+    const { completeHabit } = require('../services/habitService');
 
     const result = await completeHabit(habit.id, habit.frequency, habit.streak);
 
     if (result.success) {
       Alert.alert(
-        result.leveledUp ? "Level Up!" : "Success",
+        result.leveledUp ? '🎉 Level Up!' : 'Success!',
         result.leveledUp
           ? `${result.message}\nYou reached level ${result.newLevel}!`
-          : result.message,
+          : result.message
       );
       fetchHabits();
     } else {
-      Alert.alert("Info", result.message);
+      Alert.alert('Info', result.message);
     }
   };
 
+  const filteredHabits = habits.filter((habit) => {
+    if (selectedFilter === 'all') return true;
+    return habit.frequency === selectedFilter;
+  });
+
+  const dailyHabits = habits.filter((h) => h.frequency === 'daily');
+  const weeklyHabits = habits.filter((h) => h.frequency === 'weekly');
+
+  const renderHabit = ({ item }: { item: Habit }) => (
+    <TouchableOpacity 
+      style={styles.habitCard}
+      activeOpacity={0.7}
+    >
+      {/* Header Row */}
+      <View style={styles.habitHeader}>
+        <View style={styles.habitTitleRow}>
+          <View style={[
+            styles.frequencyDot,
+            item.frequency === 'daily' ? styles.dailyDot : styles.weeklyDot
+          ]} />
+          <Text style={styles.habitTitle} numberOfLines={1}>
+            {item.title}
+          </Text>
+        </View>
+        
+        <View style={styles.streakContainer}>
+          <Text style={styles.streakEmoji}>🔥</Text>
+          <Text style={styles.streakNumber}>{item.streak}</Text>
+        </View>
+      </View>
+
+      {/* Description */}
+      {item.description && (
+        <Text style={styles.habitDescription} numberOfLines={2}>
+          {item.description}
+        </Text>
+      )}
+
+      {/* Stats Row */}
+      <View style={styles.statsRow}>
+        <View style={styles.statItem}>
+          <Ionicons name="calendar-outline" size={16} color="#666" />
+          <Text style={styles.statText}>
+            {item.frequency === 'daily' ? 'Daily' : 'Weekly'}
+          </Text>
+        </View>
+        
+        <View style={styles.statItem}>
+          <Ionicons name="star-outline" size={16} color="#FFD700" />
+          <Text style={styles.statText}>{item.points} XP</Text>
+        </View>
+      </View>
+
+      {/* Complete Button */}
+      <TouchableOpacity
+        style={styles.completeButton}
+        onPress={() => handleCompleteHabit(item)}
+      >
+        <Ionicons name="checkmark-circle" size={24} color="white" />
+        <Text style={styles.completeButtonText}>Complete</Text>
+      </TouchableOpacity>
+    </TouchableOpacity>
+  );
+
+  const renderEmptyState = () => (
+    <View style={styles.emptyState}>
+      <Ionicons name="rocket-outline" size={80} color="#CCC" />
+      <Text style={styles.emptyStateTitle}>Start Your Journey!</Text>
+      <Text style={styles.emptyStateText}>
+        Create your first habit and begin building better routines
+      </Text>
+    </View>
+  );
+
+  const renderHeader = () => (
+    <View style={styles.headerSection}>
+      {/* Stats Overview */}
+      <View style={styles.statsOverview}>
+        <View style={styles.statBox}>
+          <Text style={styles.statBoxNumber}>{dailyHabits.length}</Text>
+          <Text style={styles.statBoxLabel}>Daily</Text>
+        </View>
+        <View style={styles.statBox}>
+          <Text style={styles.statBoxNumber}>{weeklyHabits.length}</Text>
+          <Text style={styles.statBoxLabel}>Weekly</Text>
+        </View>
+        <View style={styles.statBox}>
+          <Text style={styles.statBoxNumber}>
+            {habits.reduce((sum, h) => sum + h.streak, 0)}
+          </Text>
+          <Text style={styles.statBoxLabel}>Total Streaks</Text>
+        </View>
+      </View>
+
+      {/* Filter Tabs */}
+      <View style={styles.filterContainer}>
+        {(['all', 'daily', 'weekly'] as const).map((filter) => (
+          <TouchableOpacity
+            key={filter}
+            style={[
+              styles.filterTab,
+              selectedFilter === filter && styles.filterTabActive,
+            ]}
+            onPress={() => setSelectedFilter(filter)}
+          >
+            <Text
+              style={[
+                styles.filterTabText,
+                selectedFilter === filter && styles.filterTabTextActive,
+              ]}
+            >
+              {filter.charAt(0).toUpperCase() + filter.slice(1)}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
+
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>{userName}'s Habits</Text>
-        <TouchableOpacity onPress={handleSignOut}>
-          <Text style={styles.signOutButton}>Sign Out</Text>
+        <View>
+          <Text style={styles.greeting}>Hello, {userName}!</Text>
+          <Text style={styles.subtitle}>Keep up the great work</Text>
+        </View>
+        <TouchableOpacity onPress={handleSignOut} style={styles.menuButton}>
+          <Ionicons name="log-out-outline" size={24} color="#333" />
         </TouchableOpacity>
       </View>
 
-      {habits.length === 0 && !loading ? (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyStateText}>No habits yet!</Text>
-          <Text style={styles.emptyStateSubtext}>
-            Start building better habits today
-          </Text>
-        </View>
-      ) : (
-        <FlatList
-          data={habits}
-          renderItem={renderHabit}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContainer}
-          refreshControl={
-            <RefreshControl refreshing={loading} onRefresh={fetchHabits} />
-          }
-        />
-      )}
-
-      <TouchableOpacity
-        style={styles.addButton}
-        onPress={() => navigation.navigate("AddHabit")}
-      >
-        <Text style={styles.addButtonText}>+ Add Habit</Text>
-      </TouchableOpacity>
+      <FlatList
+        data={filteredHabits}
+        renderItem={renderHabit}
+        keyExtractor={(item) => item.id}
+        ListHeaderComponent={renderHeader}
+        ListEmptyComponent={renderEmptyState}
+        contentContainerStyle={[
+          styles.listContainer,
+          filteredHabits.length === 0 && styles.listContainerEmpty,
+        ]}
+        refreshControl={
+          <RefreshControl refreshing={loading} onRefresh={fetchHabits} />
+        }
+        showsVerticalScrollIndicator={false}
+      />
     </View>
   );
 }
@@ -185,132 +251,207 @@ export default function HabitsScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: '#F8F9FA',
   },
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
     paddingTop: 60,
-    backgroundColor: "white",
-    borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
+    paddingBottom: 20,
+    backgroundColor: 'white',
   },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
+  greeting: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#1A1A1A',
   },
-  signOutButton: {
-    color: "#FF3B30",
+  subtitle: {
     fontSize: 16,
+    color: '#666',
+    marginTop: 4,
+  },
+  menuButton: {
+    width: 38,
+    height: 40,
+    borderRadius: 22,
+    backgroundColor: '#F0F0F0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerSection: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+  },
+  statsOverview: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 24,
+  },
+  statBox: {
+    flex: 1,
+    backgroundColor: 'white',
+    padding: 16,
+    borderRadius: 16,
+    marginHorizontal: 4,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  statBoxNumber: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#007AFF',
+    marginBottom: 4,
+  },
+  statBoxLabel: {
+    fontSize: 12,
+    color: '#666',
+  },
+  filterContainer: {
+    flexDirection: 'row',
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 4,
+    marginBottom: 20,
+  },
+  filterTab: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderRadius: 8,
+  },
+  filterTabActive: {
+    backgroundColor: '#007AFF',
+  },
+  filterTabText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#666',
+  },
+  filterTabTextActive: {
+    color: 'white',
   },
   listContainer: {
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingBottom: 100,
+  },
+  listContainerEmpty: {
+    flex: 1,
   },
   habitCard: {
-    backgroundColor: "white",
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 15,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
   },
   habitHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  habitTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  frequencyDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 10,
+  },
+  dailyDot: {
+    backgroundColor: '#007AFF',
+  },
+  weeklyDot: {
+    backgroundColor: '#34C759',
   },
   habitTitle: {
     fontSize: 18,
-    fontWeight: "600",
+    fontWeight: '700',
+    color: '#1A1A1A',
     flex: 1,
   },
-  streakBadge: {
-    backgroundColor: "#c7f1a1ff",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
+  streakContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF3E0',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
   },
-  streakText: {
-    fontSize: 14,
-    fontWeight: "600",
+  streakEmoji: {
+    fontSize: 16,
+    marginRight: 4,
+  },
+  streakNumber: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FF9500',
   },
   habitDescription: {
     fontSize: 14,
-    color: "#666",
-    marginBottom: 10,
+    color: '#666',
+    marginBottom: 16,
+    lineHeight: 20,
   },
-  habitFooter: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  statsRow: {
+    flexDirection: 'row',
+    marginBottom: 16,
   },
-  frequencyText: {
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 20,
+  },
+  statText: {
     fontSize: 14,
-    color: "#666",
+    color: '#666',
+    marginLeft: 6,
+    fontWeight: '500',
   },
-  pointsText: {
-    fontSize: 14,
-    color: "#007AFF",
-    fontWeight: "600",
+  completeButton: {
+    flexDirection: 'row',
+    backgroundColor: '#34C759',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  completeButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '700',
+    marginLeft: 8,
   },
   emptyState: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 60,
   },
-  emptyStateText: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#333",
+  emptyStateTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+    marginTop: 20,
     marginBottom: 8,
   },
-  emptyStateSubtext: {
+  emptyStateText: {
     fontSize: 16,
-    color: "#666",
-  },
-  addButton: {
-    position: "absolute",
-    bottom: 30,
-    right: 20,
-    backgroundColor: "#007AFF",
-    paddingHorizontal: 25,
-    paddingVertical: 15,
-    borderRadius: 25,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  addButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  completeButton: {
-    backgroundColor: "#34C759",
-    padding: 12,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 10,
-  },
-  completeButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  frequencyContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  frequencyIcon: {
-    width: 20,
-    height: 20,
-    marginRight: 6,
+    color: '#666',
+    textAlign: 'center',
+    paddingHorizontal: 40,
   },
 });
