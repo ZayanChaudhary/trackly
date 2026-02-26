@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Text, Image } from "react-native";
+import { Text, Image, View } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -10,6 +10,7 @@ import HabitsScreen from "./src/screens/HabitsScreen";
 import AddHabitScreen from "./src/screens/AddHabitScreen";
 import ProfileScreen from "./src/screens/ProfileScreen";
 import TimelineScreen from "./src/screens/TimeLineScreen";
+import { Ionicons } from '@expo/vector-icons';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -39,11 +40,13 @@ function MainTabs() {
               style={{
                 width: 24,
                 height: 24,
+                tintColor: focused ? "#7ed957" : "#8e8e93",
               }}
             />
           ),
         }}
       />
+
       <Tab.Screen
         name="TimelineTab"
         component={TimelineScreen}
@@ -55,11 +58,46 @@ function MainTabs() {
               style={{
                 width: 24,
                 height: 24,
+                tintColor: focused ? "#7ed957" : "#8e8e93",
               }}
             />
           ),
         }}
       />
+
+      {/* Center Add Button */}
+      <Tab.Screen
+        name="AddHabitTab"
+        component={AddHabitScreen}
+        options={{
+          tabBarLabel: '',
+          tabBarIcon: ({ focused }) => (
+            <View style={{
+              width: 60,
+              height: 60,
+              borderRadius: 30,
+              backgroundColor: '#7ed957',
+              justifyContent: 'center',
+              alignItems: 'center',
+              marginTop: -30,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.3,
+              shadowRadius: 4,
+              elevation: 5,
+            }}>
+              <Ionicons name="add" size={32} color="white" />
+            </View>
+          ),
+        }}
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            e.preventDefault();
+            navigation.navigate('AddHabit');
+          },
+        })}
+      />
+
       <Tab.Screen
         name="ProfileTab"
         component={ProfileScreen}
@@ -71,6 +109,7 @@ function MainTabs() {
               style={{
                 width: 24,
                 height: 24,
+                tintColor: focused ? "#7ed957" : "#8e8e93",
               }}
             />
           ),
