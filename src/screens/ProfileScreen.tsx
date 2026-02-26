@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { supabase } from "../services/supabase";
 import { UserProfile } from "../types/habit";
-import { calcLevel, getXPforNext } from "../services/habitService";
+import { calcLevel, getXPforNext, getXPRequiredForLevel } from "../services/habitService";
 
 export default function ProfileScreen() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -97,8 +97,9 @@ export default function ProfileScreen() {
     );
   }
 
+  const currentXP = profile.xp;
+  const neededXP = getXPRequiredForLevel(profile.level);
   const xpProgress = (profile.xp / 100) * 100;
-  const nextLevelXP = getXPforNext(profile.total_xp);
 
   return (
     <ScrollView>
@@ -124,13 +125,13 @@ export default function ProfileScreen() {
       <View style={styles.xpSection}>
         <View style={styles.xpHeader}>
           <Text style={styles.xpLabel}>XP Progress</Text>
-          <Text style={styles.xpNumbers}> {profile.xp} / 100 XP</Text>
+          <Text style={styles.xpNumbers}>{currentXP} / {neededXP} XP</Text>
         </View>
         <View style={styles.progressBarContainer}>
           <View style={[styles.progressBarFill, { width: `${xpProgress}%` }]} />
         </View>
         <Text style={styles.xpSubtext}>
-          {100 - profile.xp} XP until level {profile.level + 1}
+          {neededXP - currentXP} XP until level {profile.level + 1}
         </Text>
       </View>
 

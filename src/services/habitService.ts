@@ -8,15 +8,15 @@ export const getXPRequiredForLevel = (level: number): number => {
 
 export const calcLevel = (totalXP: number): number => {
   let level = 1;
-  let xpNeeded = 0;
-  
-  while (xpNeeded <= totalXP) {
-    xpNeeded += getXPRequiredForLevel(level);
-    if (xpNeeded <= totalXP) {
-      level++;
-    }
+  let xpUsed = 0;
+
+  // Keep adding levels while we have enough XP
+  while (xpUsed + getXPRequiredForLevel(level) <= totalXP) {
+    xpUsed += getXPRequiredForLevel(level);
+    level++;
   }
   
+  console.log('calcLevel - Total XP:', totalXP, 'Calculated Level:', level, 'XP Used:', xpUsed);
   return level;
 };
 
@@ -28,13 +28,21 @@ export const getXPforNext = (currentXP: number): number => {
 export const getCurrentLevelProgress = (totalXP: number): { currentXP: number; neededXP: number} => {
     const currentLevel = calcLevel(totalXP);
 
-    let xpForCurrent = 0;
+
+    let xpForPreviousLevels = 0;
     for (let i = 1; i < currentLevel; i++){
-        xpForCurrent += getXPRequiredForLevel(i);
+        xpForPreviousLevels += getXPRequiredForLevel(i);
     }
 
-    const currentXP = totalXP - xpForCurrent;
+    const currentXP = totalXP - xpForPreviousLevels;
     const neededXP = getXPRequiredForLevel(currentLevel);
+
+    console.log('=== XP Progress ===');
+    console.log('Total XP:', totalXP);
+    console.log('Current Level:', currentLevel);
+    console.log('XP for previous levels:', xpForPreviousLevels);
+    console.log('Current XP in this level:', currentXP);
+    console.log('XP needed for next level:', neededXP);
 
     return { currentXP, neededXP}
 }
