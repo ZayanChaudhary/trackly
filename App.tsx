@@ -40,7 +40,7 @@ function MainTabs() {
               style={{
                 width: 24,
                 height: 24,
-                tintColor: focused ? "#7ed957" : "#8e8e93",
+                opacity: focused ? 1 : 0.5,
               }}
             />
           ),
@@ -58,14 +58,14 @@ function MainTabs() {
               style={{
                 width: 24,
                 height: 24,
-                tintColor: focused ? "#7ed957" : "#8e8e93",
+                opacity: focused ? 1 : 0.5,
               }}
             />
           ),
         }}
       />
 
-      {/* Center Add Button */}
+
       <Tab.Screen
         name="AddHabitTab"
         component={AddHabitScreen}
@@ -109,7 +109,7 @@ function MainTabs() {
               style={{
                 width: 24,
                 height: 24,
-                tintColor: focused ? "#7ed957" : "#8e8e93",
+                opacity: focused ? 1 : 0.5,
               }}
             />
           ),

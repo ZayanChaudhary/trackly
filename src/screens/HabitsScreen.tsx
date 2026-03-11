@@ -8,6 +8,7 @@ import {
   RefreshControl,
   Alert,
   Animated,
+  Image
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../services/supabase';
@@ -110,23 +111,41 @@ export default function HabitsScreen({ navigation }: any) {
       style={styles.habitCard}
       activeOpacity={0.7}
     >
-      {/* Header Row */}
-      <View style={styles.habitHeader}>
-        <View style={styles.habitTitleRow}>
-          <View style={[
-            styles.frequencyDot,
-            item.frequency === 'daily' ? styles.dailyDot : styles.weeklyDot
-          ]} />
-          <Text style={styles.habitTitle} numberOfLines={1}>
-            {item.title}
-          </Text>
-        </View>
-        
-        <View style={styles.streakContainer}>
-          <Text style={styles.streakEmoji}>🔥</Text>
-          <Text style={styles.streakNumber}>{item.streak}</Text>
-        </View>
-      </View>
+
+  <View style={styles.habitHeader}>
+    <View style={styles.habitTitleRow}>
+      {/* Conditionally render icon */}
+      {item.frequency === 'daily' ? (
+        <Image
+          source={require("../../assets/icons/DailyIcon.png")}
+          style={{
+            width: 16,
+            height: 16,
+            marginRight: 10,
+          }}
+        />
+      ) : (
+        <Image
+          source={require("../../assets/icons/WeeklyIcon.png")}
+          style={{
+            width: 16,
+            height: 16,
+            marginRight: 10,
+          }}
+        />
+      )}
+      
+      <Text style={styles.habitTitle} numberOfLines={1}>
+        {item.title}
+      </Text>
+    </View>
+    
+    {/* Streak badge */}
+    <View style={styles.streakContainer}>
+      <Text style={styles.streakEmoji}>🔥</Text>
+      <Text style={styles.streakNumber}>{item.streak}</Text>
+    </View>
+  </View>
 
       {/* Description */}
       {item.description && (
