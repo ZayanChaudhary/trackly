@@ -10,7 +10,8 @@ import HabitsScreen from "./src/screens/HabitsScreen";
 import AddHabitScreen from "./src/screens/AddHabitScreen";
 import ProfileScreen from "./src/screens/ProfileScreen";
 import TimelineScreen from "./src/screens/TimeLineScreen";
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from "@expo/vector-icons";
+import AnalyticScreen from "./src/screens/AnalyticScreen";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -25,7 +26,7 @@ function MainTabs() {
         tabBarStyle: {
           paddingBottom: 5,
           paddingTop: 5,
-          height: 60,
+          height: 80,
         },
       }}
     >
@@ -65,27 +66,28 @@ function MainTabs() {
         }}
       />
 
-
       <Tab.Screen
         name="AddHabitTab"
         component={AddHabitScreen}
         options={{
-          tabBarLabel: '',
+          tabBarLabel: "",
           tabBarIcon: ({ focused }) => (
-            <View style={{
-              width: 60,
-              height: 60,
-              borderRadius: 30,
-              backgroundColor: '#7ed957',
-              justifyContent: 'center',
-              alignItems: 'center',
-              marginTop: -30,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.3,
-              shadowRadius: 4,
-              elevation: 5,
-            }}>
+            <View
+              style={{
+                width: 60,
+                height: 60,
+                borderRadius: 30,
+                backgroundColor: "#7ed957",
+                justifyContent: "center",
+                alignItems: "center",
+                marginTop: -30,
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.3,
+                shadowRadius: 4,
+                elevation: 5,
+              }}
+            >
               <Ionicons name="add" size={32} color="white" />
             </View>
           ),
@@ -93,9 +95,24 @@ function MainTabs() {
         listeners={({ navigation }) => ({
           tabPress: (e) => {
             e.preventDefault();
-            navigation.navigate('AddHabit');
+            navigation.navigate("AddHabit");
           },
         })}
+      />
+
+      <Tab.Screen
+        name="AnalyticsTab"
+        component={AnalyticScreen}
+        options={{
+          tabBarLabel: "Insights",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name="stats-chart"
+              size={24}
+              color={focused ? "#7ed957" : "#8e8e93"}
+            />
+          ),
+        }}
       />
 
       <Tab.Screen
