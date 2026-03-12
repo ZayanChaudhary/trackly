@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Text, Image, View } from "react-native";
+import { Text, Image, View, Pressable } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -26,7 +26,7 @@ function MainTabs() {
         tabBarStyle: {
           paddingBottom: 5,
           paddingTop: 5,
-          height: 80,
+          height: 75,
         },
       }}
     >
@@ -36,13 +36,10 @@ function MainTabs() {
         options={{
           tabBarLabel: "Habits",
           tabBarIcon: ({ color, focused }) => (
-            <Image
-              source={require("./assets/icons/HabitScreenIcon.png")}
-              style={{
-                width: 24,
-                height: 24,
-                opacity: focused ? 1 : 0.5,
-              }}
+            <Ionicons
+              name="calendar-sharp"
+              size={24}
+              color={focused ? "#7ed957" : "#8e8e93"}
             />
           ),
         }}
@@ -54,13 +51,10 @@ function MainTabs() {
         options={{
           tabBarLabel: "Path",
           tabBarIcon: ({ color, focused }) => (
-            <Image
-              source={require("./assets/icons/TimelineScreenIcon.png")}
-              style={{
-                width: 24,
-                height: 24,
-                opacity: focused ? 1 : 0.5,
-              }}
+            <Ionicons
+              name="map-sharp"
+              size={24}
+              color={focused ? "#7ed957" : "#8e8e93"}
             />
           ),
         }}
@@ -88,7 +82,7 @@ function MainTabs() {
                 elevation: 5,
               }}
             >
-              <Ionicons name="add" size={32} color="white" />
+              <Ionicons name="add-circle-sharp" size={32} color="white" />
             </View>
           ),
         }}
@@ -107,7 +101,7 @@ function MainTabs() {
           tabBarLabel: "Insights",
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
-              name="stats-chart"
+              name="pie-chart-sharp"
               size={24}
               color={focused ? "#7ed957" : "#8e8e93"}
             />
@@ -121,13 +115,10 @@ function MainTabs() {
         options={{
           tabBarLabel: "Profile",
           tabBarIcon: ({ color, focused }) => (
-            <Image
-              source={require("./assets/icons/ProfileScreenIcon.png")}
-              style={{
-                width: 24,
-                height: 24,
-                opacity: focused ? 1 : 0.5,
-              }}
+            <Ionicons
+              name="person-sharp"
+              size={24}
+              color={focused ? "#7ed957" : "#8e8e93"}
             />
           ),
         }}
@@ -172,3 +163,5 @@ export default function App() {
     </NavigationContainer>
   );
 }
+
+//"stats-chart-outline"

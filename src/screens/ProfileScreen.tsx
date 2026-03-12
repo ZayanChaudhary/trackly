@@ -253,6 +253,7 @@ const styles = StyleSheet.create({
   signOutButton: {
     color: "#FF3B30",
     fontSize: 16,
+    fontWeight:  'bold',
   },
   avatarSection: {
     alignItems: "center",
@@ -264,7 +265,7 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: "#007AFF",
+    backgroundColor: "#7ed957",
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 15,
@@ -280,7 +281,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   levelBadge: {
-    backgroundColor: "#FFD700",
+    backgroundColor: "#179151",
     paddingHorizontal: 20,
     paddingVertical: 8,
     borderRadius: 20,
@@ -288,12 +289,14 @@ const styles = StyleSheet.create({
   levelText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#333",
+    color: "#ffffffff",
   },
   xpSection: {
     backgroundColor: "white",
     padding: 20,
-    marginBottom: 20,
+    margin: 10,
+    marginBottom: 10,
+    borderRadius: 5,
   },
   xpHeader: {
     flexDirection: "row",
@@ -317,7 +320,7 @@ const styles = StyleSheet.create({
   },
   progressBarFill: {
     height: "100%",
-    backgroundColor: "#007AFF",
+    backgroundColor: "#7ed957",
     borderRadius: 5,
   },
   xpSubtext: {
@@ -342,7 +345,7 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#007AFF",
+    color: "#179151",
     marginBottom: 5,
   },
   statLabel: {
@@ -381,7 +384,7 @@ accessoryCard: {
   alignItems: 'center',
   width: '48%',
   borderWidth: 2,
-  borderColor: '#007AFF',
+  borderColor: '#7ed957',
 },
 accessoryIcon: {
   fontSize: 40,

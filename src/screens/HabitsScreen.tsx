@@ -192,23 +192,7 @@ export default function HabitsScreen({ navigation }: any) {
 
   const renderHeader = () => (
     <View style={styles.headerSection}>
-      {/* Stats Overview */}
-      <View style={styles.statsOverview}>
-        <View style={styles.statBox}>
-          <Text style={styles.statBoxNumber}>{dailyHabits.length}</Text>
-          <Text style={styles.statBoxLabel}>Daily</Text>
-        </View>
-        <View style={styles.statBox}>
-          <Text style={styles.statBoxNumber}>{weeklyHabits.length}</Text>
-          <Text style={styles.statBoxLabel}>Weekly</Text>
-        </View>
-        <View style={styles.statBox}>
-          <Text style={styles.statBoxNumber}>
-            {habits.reduce((sum, h) => sum + h.streak, 0)}
-          </Text>
-          <Text style={styles.statBoxLabel}>Total Streaks</Text>
-        </View>
-      </View>
+
 
       {/* Filter Tabs */}
       <View style={styles.filterContainer}>
@@ -243,9 +227,6 @@ export default function HabitsScreen({ navigation }: any) {
           <Text style={styles.greeting}>Hello, {userName}!</Text>
           <Text style={styles.subtitle}>Keep up the great work</Text>
         </View>
-        <TouchableOpacity onPress={handleSignOut} style={styles.menuButton}>
-          <Ionicons name="log-out-outline" size={24} color="#333" />
-        </TouchableOpacity>
       </View>
 
       <FlatList

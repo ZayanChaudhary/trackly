@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   Dimensions,
   TouchableOpacity,
   ActivityIndicator,
+  Animated,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { LineChart, BarChart, PieChart } from "react-native-chart-kit";
@@ -32,11 +33,53 @@ export default function AnalyticScreen() {
   const [generatingInsight, setGeneratingInsight] = useState(false);
   const [aiInsights, setAiInsights] = useState<AIInsight | null>(null);
 
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideUp = useRef(new Animated.Value(20)).current;
+
   useFocusEffect(
     React.useCallback(() => {
       fetchAnalytics();
+      fadeAnim.setValue(0);
+      slideUp.setValue(20);
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+        Animated.spring(slideUp, {
+          toValue: 0,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+      ]).start();
     }, []),
   );
+
+  const handleGenerateInsights = async () => {
+    if (!data) return;
+
+    setGeneratingInsight(true);
+    try {
+      const insights = await generateAIInsights(
+        data.totalCompletions,
+        data.weeklyCompletions,
+        data.completionRate,
+        data.longestStreak,
+        data.topHabits
+      );
+
+      if (insights) {
+        setAiInsights(insights);
+      } else {
+        alert("Failed to generate insights. Please try again.");
+      }
+    } catch (error) {
+      console.error("AI Insight Error:", error);
+    } finally {
+      setGeneratingInsight(false);
+    }
+  };
 
   const fetchAnalytics = async () => {
     try {
@@ -121,456 +164,194 @@ export default function AnalyticScreen() {
     }
   };
 
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#7ed957" />
-      </View>
-    );
-  }
-
-  if (!data) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text style={styles.emptyText}>No data available yet</Text>
-        <Text style={styles.emptySubtext}>
-          Complete some habits to see your analytics!
-        </Text>
-      </View>
-    );
-  }
-
   const chartConfig = {
     backgroundGradientFrom: "#fff",
     backgroundGradientTo: "#fff",
     color: (opacity = 1) => `rgba(126, 217, 87, ${opacity})`,
     strokeWidth: 2,
-    barPercentage: 0.7,
+    barPercentage: 0.6,
     decimalPlaces: 0,
+    labelColor: (opacity = 1) => `rgba(100, 100, 100, ${opacity})`,
   };
 
-  const handleGenerateInsights = async () => {
-    if (!data) return;
-
-    setGeneratingInsight(true);
-    const insights = await generateAIInsights(
-      data.totalCompletions,
-      data.weeklyCompletions,
-      data.completionRate,
-      data.longestStreak,
-      data.topHabits,
+  if (loading)
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#7ed957" />
+      </View>
     );
 
-    if (insights) {
-      setAiInsights(insights);
-    } else {
-      alert(
-        "Failed to generate insights. Please check your API key and try again",
-      );
-    }
-
-    setGeneratingInsight(false);
-  };
-
   return (
-    <ScrollView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Analytics</Text>
-        <Text style={styles.headerSubtitle}>Your progress insights</Text>
-      </View>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <Animated.View
+        style={{ opacity: fadeAnim, transform: [{ translateY: slideUp }] }}
+      >
 
-      {/* Stats Cards */}
-      <View style={styles.statsContainer}>
-        <View style={styles.statCard}>
-          <Ionicons name="checkmark-circle" size={32} color="#34C759" />
-          <Text style={styles.statNumber}>{data.totalCompletions}</Text>
-          <Text style={styles.statLabel}>Total</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Ionicons name="flame" size={32} color="#FF9500" />
-          <Text style={styles.statNumber}>{data.longestStreak}</Text>
-          <Text style={styles.statLabel}>Best Streak</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Ionicons name="trending-up" size={32} color="#7ed957" />
-          <Text style={styles.statNumber}>
-            {data.completionRate.toFixed(0)}%
-          </Text>
-          <Text style={styles.statLabel}>7-Day Rate</Text>
-        </View>
-      </View>
-
-      {/* Weekly Activity Chart */}
-      <View style={styles.chartSection}>
-        <Text style={styles.sectionTitle}>Last 7 Days Activity</Text>
-        <LineChart
-          data={{
-            labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-            datasets: [
-              {
-                data: data.dailyData.length > 0 ? data.dailyData : [0],
-              },
-            ],
-          }}
-          width={screenWidth - 40}
-          height={220}
-          chartConfig={chartConfig}
-          bezier
-          style={styles.chart}
-        />
-      </View>
-
-      {/* Top Habits Chart */}
-      {data.topHabits.length > 0 && (
-        <View style={styles.chartSection}>
-          <Text style={styles.sectionTitle}>Top Habits</Text>
-          <BarChart
-            data={{
-              labels: data.topHabits.map((h) => h.title.substring(0, 8)),
-              datasets: [
-                {
-                  data: data.topHabits.map((h) => Math.max(h.count, 1)),
-                },
-              ],
-            }}
-            width={screenWidth - 40}
-            height={220}
-            chartConfig={chartConfig}
-            style={styles.chart}
-            yAxisLabel=""
-            yAxisSuffix=""
-          />
-        </View>
-      )}
-
-      {/* Weekly Summary */}
-      <View style={styles.summarySection}>
-        <Text style={styles.sectionTitle}>Weekly Summary</Text>
-        <View style={styles.summaryCard}>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Completions this week:</Text>
-            <Text style={styles.summaryValue}>{data.weeklyCompletions}</Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Current total streak:</Text>
-            <Text style={styles.summaryValue}>{data.currentStreak} days</Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Completion rate:</Text>
-            <Text style={styles.summaryValue}>
-              {data.completionRate.toFixed(1)}%
-            </Text>
-          </View>
-        </View>
-      </View>
-
-      {/* AI Insights Section */}
-      <View style={styles.aiSection}>
-        <View style={styles.aiHeader}>
-          <Ionicons name="sparkles" size={24} color="#7ed957" />
-          <Text style={styles.sectionTitle}>AI Insights</Text>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Analytics</Text>
+          <Text style={styles.headerSubtitle}>Personalised AI Insights</Text>
         </View>
 
-        {!aiInsights && !generatingInsight && (
-          <TouchableOpacity
-            style={styles.generateButton}
-            onPress={handleGenerateInsights}
-          >
-            <Ionicons name="bulb" size={20} color="white" />
-            <Text style={styles.generateButtonText}>Generate AI Insights</Text>
-          </TouchableOpacity>
-        )}
 
-        {generatingInsight && (
-          <View style={styles.insightsLoading}>
-            <ActivityIndicator size="small" color="#7ed957" />
-            <Text style={styles.insightsLoadingText}>
-              Analyzing your progress...
-            </Text>
-          </View>
-        )}
-
-        {aiInsights && (
-          <View style={styles.insightsContainer}>
-            {/* Summary */}
-            <View style={styles.insightCard}>
-              <Text style={styles.insightTitle}>📊 Summary</Text>
-              <Text style={styles.insightText}>{aiInsights.summary}</Text>
-            </View>
-
-            {/* Strengths */}
-            <View style={styles.insightCard}>
-              <Text style={styles.insightTitle}>💪 Your Strengths</Text>
-              {aiInsights.strengths.map((strength, index) => (
-                <View key={index} style={styles.bulletPoint}>
-                  <Text style={styles.bullet}>•</Text>
-                  <Text style={styles.insightText}>{strength}</Text>
-                </View>
-              ))}
-            </View>
-
-            {/* Suggestions */}
-            <View style={styles.insightCard}>
-              <Text style={styles.insightTitle}>💡 Suggestions</Text>
-              {aiInsights.suggestions.map((suggestion, index) => (
-                <View key={index} style={styles.bulletPoint}>
-                  <Text style={styles.bullet}>•</Text>
-                  <Text style={styles.insightText}>{suggestion}</Text>
-                </View>
-              ))}
-            </View>
-
-            {/* Motivational Message */}
-            <View style={[styles.insightCard, styles.motivationalCard]}>
-              <Text style={styles.motivationalText}>
-                {aiInsights.motivationalMessage}
-              </Text>
-            </View>
-
+        <View style={styles.aiSection}>
+          {!aiInsights && !generatingInsight && (
             <TouchableOpacity
-              style={styles.refreshButton}
+              style={styles.generateButton}
               onPress={handleGenerateInsights}
             >
-              <Ionicons name="refresh" size={16} color="#7ed957" />
-              <Text style={styles.refreshButtonText}>Refresh Insights</Text>
+              <Ionicons name="sparkles-sharp" size={20} color="white" />
+              <Text style={styles.generateButtonText}>Get AI Analysis</Text>
             </TouchableOpacity>
+          )}
+
+          {generatingInsight && (
+            <View style={styles.insightsLoading}>
+              <ActivityIndicator size="small" color="#7ed957" />
+              <Text style={styles.insightsLoadingText}>Thinking...</Text>
+            </View>
+          )}
+
+          {aiInsights && (
+            <View>
+
+              <View style={styles.summaryHighlightCard}>
+                <Ionicons name="bulb" size={24} color="#7ed957" />
+                <Text style={styles.summaryHighlightText} numberOfLines={10}>
+                  {aiInsights.summary}
+                </Text>
+              </View>
+
+
+              <View style={styles.insightGrid}>
+                <View style={[styles.gridCard, { borderLeftColor: "#7ed957" }]}>
+                  <Text style={styles.gridTitle}>Strengths</Text>
+                  <Text style={styles.gridBody}>{aiInsights.strengths[0]}</Text>
+                </View>
+                <View style={[styles.gridCard, { borderLeftColor: "#FF9500" }]}>
+                  <Text style={styles.gridTitle}>Tips</Text>
+                  <Text style={styles.gridBody}>
+                    {aiInsights.suggestions[0]}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          )}
+        </View>
+
+
+        <View style={styles.statsContainer}>
+          <View style={styles.statCard}>
+            <Text style={styles.statLabel}>Total</Text>
+            <Text style={styles.statNumber}>{data?.totalCompletions}</Text>
           </View>
-        )}
-      </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statLabel}>Best Streak</Text>
+            <Text style={styles.statNumber}>{data?.longestStreak}</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statLabel}>Rate</Text>
+            <Text style={styles.statNumber}>
+              {data?.completionRate.toFixed(0)}%
+            </Text>
+          </View>
+        </View>
+
+
+        <View style={styles.chartSection}>
+          <Text style={styles.sectionTitle}>Weekly Activity</Text>
+          <LineChart
+            data={{
+              labels: ["M", "T", "W", "T", "F", "S", "S"],
+              datasets: [{ data: data?.dailyData || [0] }],
+            }}
+            width={screenWidth - 40}
+            height={180}
+            chartConfig={chartConfig}
+            bezier
+            style={styles.chart}
+          />
+        </View>
+      </Animated.View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F8F9FA",
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
+  container: { flex: 1, backgroundColor: "#F8F9FA" },
+  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
+  header: { paddingHorizontal: 20, paddingTop: 60, paddingBottom: 15 },
+  headerTitle: { fontSize: 28, fontWeight: "bold", color: "#1A1A1A" },
+  headerSubtitle: { fontSize: 15, color: "#8e8e93" },
+
+
+  aiSection: { paddingHorizontal: 20, marginBottom: 20 },
+  generateButton: {
+    flexDirection: "row",
+    backgroundColor: "#1A1A1A",
+    padding: 15,
+    borderRadius: 12,
     alignItems: "center",
-    backgroundColor: "#F8F9FA",
+    justifyContent: "center",
   },
-  emptyText: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 8,
-  },
-  emptySubtext: {
-    fontSize: 16,
-    color: "#666",
-  },
-  header: {
-    padding: 20,
-    paddingTop: 60,
+  generateButtonText: { color: "white", fontWeight: "600", marginLeft: 8 },
+  summaryHighlightCard: {
     backgroundColor: "white",
-    borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
+    padding: 16,
+    borderRadius: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    elevation: 2,
   },
-  headerTitle: {
-    fontSize: 28,
+  summaryHighlightText: {
+    flex: 1,
+    marginLeft: 12,
+    fontSize: 14,
+    color: "#444",
+    lineHeight: 20,
+  },
+  insightGrid: { flexDirection: "row", justifyContent: "space-between" },
+  gridCard: {
+    width: "48%",
+    backgroundColor: "white",
+    padding: 12,
+    borderRadius: 12,
+    borderLeftWidth: 4,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    elevation: 2,
+  },
+  gridTitle: {
     fontWeight: "bold",
-    color: "#1A1A1A",
+    fontSize: 13,
+    color: "#8e8e93",
+    marginBottom: 4,
   },
-  headerSubtitle: {
-    fontSize: 16,
-    color: "#666",
-    marginTop: 4,
-  },
+  gridBody: { fontSize: 12, color: "#333", fontWeight: "500" },
+
+  // Stats
   statsContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    padding: 20,
+    paddingHorizontal: 20,
+    marginBottom: 20,
   },
   statCard: {
     flex: 1,
     backgroundColor: "white",
-    padding: 16,
-    borderRadius: 16,
-    marginHorizontal: 4,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#1A1A1A",
-    marginTop: 8,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: "#666",
-    marginTop: 4,
-    textAlign: "center",
-  },
-  chartSection: {
-    paddingHorizontal: 20,
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#1A1A1A",
-    marginBottom: 16,
-  },
-  chart: {
-    borderRadius: 16,
-  },
-  summarySection: {
-    paddingHorizontal: 20,
-    marginBottom: 20,
-  },
-  summaryCard: {
-    backgroundColor: "white",
-    padding: 20,
-    borderRadius: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  summaryRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F0F0F0",
-  },
-  summaryLabel: {
-    fontSize: 16,
-    color: "#666",
-  },
-  summaryValue: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#1A1A1A",
-  },
-  aiSection: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
-  },
-  aiHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  aiPlaceholder: {
-    backgroundColor: "white",
-    padding: 40,
-    borderRadius: 16,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  aiPlaceholderText: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#333",
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  aiPlaceholderSubtext: {
-    fontSize: 14,
-    color: "#666",
-    textAlign: "center",
-  },
-  generateButton: {
-    flexDirection: "row",
-    backgroundColor: "#7ed957",
-    padding: 16,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  generateButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "600",
-    marginLeft: 8,
-  },
-  insightsLoading: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 20,
-    backgroundColor: "white",
-    borderRadius: 12,
-  },
-  insightsLoadingText: {
-    marginLeft: 12,
-    color: "#666",
-    fontSize: 16,
-  },
-  insightsContainer: {
-    gap: 16,
-  },
-  insightCard: {
-    backgroundColor: "white",
-    padding: 20,
-    borderRadius: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  insightTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#1A1A1A",
-    marginBottom: 12,
-  },
-  insightText: {
-    fontSize: 15,
-    color: "#333",
-    lineHeight: 22,
-    flex: 1,
-  },
-  bulletPoint: {
-    flexDirection: "row",
-    marginBottom: 8,
-  },
-  bullet: {
-    fontSize: 15,
-    color: "#7ed957",
-    marginRight: 8,
-    fontWeight: "bold",
-  },
-  motivationalCard: {
-    backgroundColor: "#7ed957",
-  },
-  motivationalText: {
-    fontSize: 16,
-    color: "white",
-    fontWeight: "600",
-    textAlign: "center",
-    lineHeight: 24,
-  },
-  refreshButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
     padding: 12,
-    backgroundColor: "transparent",
-    borderWidth: 1,
-    borderColor: "#7ed957",
-    borderRadius: 8,
+    borderRadius: 12,
+    marginRight: 8,
+    alignItems: "center",
   },
-  refreshButtonText: {
-    color: "#7ed957",
-    fontSize: 14,
-    fontWeight: "600",
-    marginLeft: 6,
-  },
+  statNumber: { fontSize: 20, fontWeight: "bold", color: "#1A1A1A" },
+  statLabel: { fontSize: 11, color: "#8e8e93", textTransform: "uppercase" },
+
+  // Charts
+  chartSection: { paddingHorizontal: 20, marginBottom: 30 },
+  sectionTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 12 },
+  chart: { borderRadius: 16, marginLeft: -10 },
+  insightsLoading: { padding: 20, alignItems: "center" },
+  insightsLoadingText: { marginTop: 8, color: "#8e8e93" },
 });
