@@ -25,6 +25,7 @@ interface AnalyticsData {
   completionRate: number;
   dailyData: number[];
   topHabits: { title: string; count: number }[];
+  labels: string[];
 }
 
 export default function AnalyticScreen() {
@@ -66,7 +67,7 @@ export default function AnalyticScreen() {
         data.weeklyCompletions,
         data.completionRate,
         data.longestStreak,
-        data.topHabits
+        data.topHabits,
       );
 
       if (insights) {
@@ -86,75 +87,76 @@ export default function AnalyticScreen() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-
       if (!user) return;
 
-      const { data: logs } = await supabase
-        .from("habit_logs")
-        .select("completed_at, points_earned, habit_id")
-        .eq("user_id", user.id)
-        .order("completed_at", { ascending: true });
-
-      const { data: habits } = await supabase
-        .from("habits")
-        .select("id, title, streak")
-        .eq("user_id", user.id);
+      // 1. Fetch data from Supabase
+      const [{ data: logs }, { data: habits }] = await Promise.all([
+        supabase
+          .from("habit_logs")
+          .select("completed_at, habit_id")
+          .eq("user_id", user.id),
+        supabase
+          .from("habits")
+          .select("id, title, streak")
+          .eq("user_id", user.id),
+      ]);
 
       if (!logs || !habits) {
         setLoading(false);
         return;
       }
 
-      const today = new Date();
-      const last7Days = Array.from({ length: 7 }, (_, i) => {
-        const date = new Date(today);
-        date.setDate(date.getDate() - (6 - i));
-        date.setHours(0, 0, 0, 0);
-        return date;
-      });
+      const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+      const dailyData: number[] = [];
+      const labels: string[] = [];
 
-      const dailyData = last7Days.map((date) => {
-        const nextDay = new Date(date);
-        nextDay.setDate(nextDay.getDate() + 1);
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        d.setHours(0, 0, 0, 0);
 
-        return logs.filter((log) => {
+        const nextD = new Date(d);
+        nextD.setDate(d.getDate() + 1);
+
+        const count = logs.filter((log) => {
           const logDate = new Date(log.completed_at);
-          return logDate >= date && logDate < nextDay;
+          return logDate >= d && logDate < nextD;
         }).length;
-      });
 
-      const weeklyCompletions = dailyData.reduce(
-        (sum, count) => sum + count,
-        0,
-      );
+        dailyData.push(count);
+        labels.push(dayNames[d.getDay()]);
+      }
 
-      const totalPossibleCompletions = habits.length * 7;
+      const totalCompletions = logs.length;
+      const weeklyCompletions = dailyData.reduce((a, b) => a + b, 0);
+
+      const longestStreak =
+        habits.length > 0 ? Math.max(...habits.map((h) => h.streak || 0)) : 0;
+
+      const currentStreak = habits.reduce((sum, h) => sum + (h.streak || 0), 0);
+
+      const totalPossibleWeekly = habits.length * 7;
       const completionRate =
-        totalPossibleCompletions > 0
-          ? (weeklyCompletions / totalPossibleCompletions) * 100
+        totalPossibleWeekly > 0
+          ? (weeklyCompletions / totalPossibleWeekly) * 100
           : 0;
 
-      const habitCompletions = habits.map((habit) => ({
-        title: habit.title,
-        count: logs.filter((log) => log.habit_id === habit.id).length,
-      }));
-
-      const topHabits = habitCompletions
+      const topHabits = habits
+        .map((habit) => ({
+          title: habit.title,
+          count: logs.filter((l) => l.habit_id === habit.id).length,
+        }))
         .sort((a, b) => b.count - a.count)
         .slice(0, 5);
 
-      const longestStreak =
-        habits.length > 0 ? Math.max(...habits.map((h) => h.streak)) : 0;
-
-      const currentStreak = habits.reduce((sum, h) => sum + h.streak, 0);
-
       setData({
-        totalCompletions: logs.length,
+        totalCompletions,
         weeklyCompletions,
         currentStreak,
         longestStreak,
         completionRate,
         dailyData,
+        labels,
         topHabits,
       });
     } catch (e) {
@@ -186,12 +188,10 @@ export default function AnalyticScreen() {
       <Animated.View
         style={{ opacity: fadeAnim, transform: [{ translateY: slideUp }] }}
       >
-
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Analytics</Text>
           <Text style={styles.headerSubtitle}>Personalised AI Insights</Text>
         </View>
-
 
         <View style={styles.aiSection}>
           {!aiInsights && !generatingInsight && (
@@ -213,14 +213,12 @@ export default function AnalyticScreen() {
 
           {aiInsights && (
             <View>
-
               <View style={styles.summaryHighlightCard}>
                 <Ionicons name="bulb" size={24} color="#7ed957" />
                 <Text style={styles.summaryHighlightText} numberOfLines={10}>
                   {aiInsights.summary}
                 </Text>
               </View>
-
 
               <View style={styles.insightGrid}>
                 <View style={[styles.gridCard, { borderLeftColor: "#7ed957" }]}>
@@ -237,7 +235,6 @@ export default function AnalyticScreen() {
             </View>
           )}
         </View>
-
 
         <View style={styles.statsContainer}>
           <View style={styles.statCard}>
@@ -256,13 +253,12 @@ export default function AnalyticScreen() {
           </View>
         </View>
 
-
         <View style={styles.chartSection}>
           <Text style={styles.sectionTitle}>Weekly Activity</Text>
           <LineChart
             data={{
-              labels: ["M", "T", "W", "T", "F", "S", "S"],
-              datasets: [{ data: data?.dailyData || [0] }],
+              labels: data?.labels || ["", "", "", "", "", "", ""],
+              datasets: [{ data: data?.dailyData || [0, 0, 0, 0, 0, 0, 0] }],
             }}
             width={screenWidth - 40}
             height={180}
@@ -282,7 +278,6 @@ const styles = StyleSheet.create({
   header: { paddingHorizontal: 20, paddingTop: 60, paddingBottom: 15 },
   headerTitle: { fontSize: 28, fontWeight: "bold", color: "#1A1A1A" },
   headerSubtitle: { fontSize: 15, color: "#8e8e93" },
-
 
   aiSection: { paddingHorizontal: 20, marginBottom: 20 },
   generateButton: {
