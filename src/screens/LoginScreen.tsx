@@ -8,6 +8,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Image
 } from "react-native";
 import { supabase } from "../services/supabase";
 import { Animated } from "react-native";
@@ -105,8 +106,11 @@ export default function LoginScreen() {
       style={styles.container}
     >
       <View style={styles.formContainer}>
-        <Text style={styles.title}>Trackly</Text>
-        <Text style={styles.subtitle}>Build better habits</Text>
+               <Image
+                  source={require("../../assets/icons/TracklyAuthPage.png")}
+                  style={styles.logo}
+                  resizeMode="contain"
+                />
 
         {isSignUp && (
           <TextInput
@@ -163,7 +167,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#2a9546",
   },
   formContainer: {
     flex: 1,
@@ -193,7 +197,7 @@ const styles = StyleSheet.create({
     borderColor: "#ddd",
   },
   button: {
-    backgroundColor: "#007AFF",
+    backgroundColor: "#34C759",
     padding: 15,
     borderRadius: 10,
     alignItems: "center",
@@ -212,7 +216,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   switchText: {
-    color: "#007AFF",
+    color: "#ccc",
     fontSize: 14,
   },
+  logo: {
+    width: 280, 
+    height: 280,
+    alignSelf: 'center',
+    marginBottom: 20,
+  }
 });

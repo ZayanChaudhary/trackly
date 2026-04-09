@@ -10,7 +10,11 @@ import {
 } from "react-native";
 import { supabase } from "../services/supabase";
 import { UserProfile } from "../types/habit";
-import { calcLevel, getXPforNext, getXPRequiredForLevel } from "../services/habitService";
+import {
+  calcLevel,
+  getXPforNext,
+  getXPRequiredForLevel,
+} from "../services/habitService";
 
 export default function ProfileScreen() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -125,7 +129,9 @@ export default function ProfileScreen() {
       <View style={styles.xpSection}>
         <View style={styles.xpHeader}>
           <Text style={styles.xpLabel}>XP Progress</Text>
-          <Text style={styles.xpNumbers}>{currentXP} / {neededXP} XP</Text>
+          <Text style={styles.xpNumbers}>
+            {currentXP} / {neededXP} XP
+          </Text>
         </View>
         <View style={styles.progressBarContainer}>
           <View style={[styles.progressBarFill, { width: `${xpProgress}%` }]} />
@@ -154,7 +160,7 @@ export default function ProfileScreen() {
         <Text style={styles.sectionTitle}>Achievements</Text>
         <View style={styles.achievementsPlaceholder}>
           <Text style={styles.placeholderText}>
-            Complete more habits to unlock achievements! 
+            Complete more habits to unlock achievements!
           </Text>
         </View>
       </View>
@@ -178,8 +184,9 @@ function UnlockedAccessoriesList({ userId }: { userId: string }) {
   const fetchUnlockedAccessories = async () => {
     try {
       const { data } = await supabase
-        .from('user_accessories')
-        .select(`
+        .from("user_accessories")
+        .select(
+          `
           accessory_id,
           accessories (
             id,
@@ -188,13 +195,14 @@ function UnlockedAccessoriesList({ userId }: { userId: string }) {
             icon,
             unlock_level
           )
-        `)
-        .eq('user_id', userId);
+        `,
+        )
+        .eq("user_id", userId);
 
       const accessoryList = data?.map((item: any) => item.accessories) || [];
       setAccessories(accessoryList);
     } catch (error) {
-      console.error('Error fetching accessories:', error);
+      console.error("Error fetching accessories:", error);
     } finally {
       setLoading(false);
     }
@@ -224,7 +232,9 @@ function UnlockedAccessoriesList({ userId }: { userId: string }) {
         <View key={accessory.id} style={styles.accessoryCard}>
           <Text style={styles.accessoryIcon}>{accessory.icon}</Text>
           <Text style={styles.accessoryName}>{accessory.name}</Text>
-          <Text style={styles.accessoryLevel}>Level {accessory.unlock_level}</Text>
+          <Text style={styles.accessoryLevel}>
+            Level {accessory.unlock_level}
+          </Text>
         </View>
       ))}
     </View>
@@ -253,7 +263,7 @@ const styles = StyleSheet.create({
   signOutButton: {
     color: "#FF3B30",
     fontSize: 16,
-    fontWeight:  'bold',
+    fontWeight: "bold",
   },
   avatarSection: {
     alignItems: "center",
@@ -372,33 +382,33 @@ const styles = StyleSheet.create({
     color: "#666",
     textAlign: "center",
   },
-accessoriesGrid: {
-  flexDirection: 'row',
-  flexWrap: 'wrap',
-  gap: 10,
-},
-accessoryCard: {
-  backgroundColor: 'white',
-  padding: 15,
-  borderRadius: 12,
-  alignItems: 'center',
-  width: '48%',
-  borderWidth: 2,
-  borderColor: '#7ed957',
-},
-accessoryIcon: {
-  fontSize: 40,
-  marginBottom: 8,
-},
-accessoryName: {
-  fontSize: 14,
-  fontWeight: '600',
-  color: '#333',
-  textAlign: 'center',
-  marginBottom: 4,
-},
-accessoryLevel: {
-  fontSize: 12,
-  color: '#666',
-},
+  accessoriesGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  accessoryCard: {
+    backgroundColor: "white",
+    padding: 15,
+    borderRadius: 12,
+    alignItems: "center",
+    width: "48%",
+    borderWidth: 2,
+    borderColor: "#7ed957",
+  },
+  accessoryIcon: {
+    fontSize: 40,
+    marginBottom: 8,
+  },
+  accessoryName: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#333",
+    textAlign: "center",
+    marginBottom: 4,
+  },
+  accessoryLevel: {
+    fontSize: 12,
+    color: "#666",
+  },
 });

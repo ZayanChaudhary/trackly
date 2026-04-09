@@ -1,85 +1,81 @@
 import React, { useState, useEffect, use } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Image,
-} from "react-native";
+import { View, Text, StyleSheet, ScrollView, Image } from "react-native";
 import { supabase } from "../services/supabase";
 import { useFocusEffect } from "@react-navigation/native";
-import { Accessory, UserProfile } from '../types/habit';
+import { Accessory, UserProfile } from "../types/habit";
 
 interface TimelineNode {
-    level: number;
-    hasReward: boolean;
-    accessory?: Accessory;
-    isUnlocked: boolean;
+  level: number;
+  hasReward: boolean;
+  accessory?: Accessory;
+  isUnlocked: boolean;
 }
 
 export default function TimelineScreen() {
-    const [timeline, setTimeline] = useState<TimelineNode[]>([]);
-    const [currentLevel, setCurrentLevel] = useState(1);
-    const [unlockedAccessoryIds, setUnlockedAccessoryIds] = useState<string[]>([]);
-    const [loading, setLoading] = useState(true);
+  const [timeline, setTimeline] = useState<TimelineNode[]>([]);
+  const [currentLevel, setCurrentLevel] = useState(1);
+  const [unlockedAccessoryIds, setUnlockedAccessoryIds] = useState<string[]>(
+    [],
+  );
+  const [loading, setLoading] = useState(true);
 
-    useFocusEffect(
-        React.useCallback(() => {
-            fetchTimelineData();
-        }, [])
-    );
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchTimelineData();
+    }, []),
+  );
 
-    const fetchTimelineData = async () => {
-        try{
-            const {
-                data: { user },
-            } = await supabase.auth.getUser();
+  const fetchTimelineData = async () => {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-            if (!user) return;
+      if (!user) return;
 
-            const { data: profile } = await supabase
-                .from('user_profiles')
-                .select('level')
-                .eq('user_id', user.id)
-                .single()
+      const { data: profile } = await supabase
+        .from("user_profiles")
+        .select("level")
+        .eq("user_id", user.id)
+        .single();
 
-            const userLevel = profile?.level || 1;
-            setCurrentLevel(userLevel);
+      const userLevel = profile?.level || 1;
+      setCurrentLevel(userLevel);
 
-            const { data: accessories } = await supabase 
-                .from('accessories')
-                .select('*')
-                .order('unlock_level', { ascending: true });
+      const { data: accessories } = await supabase
+        .from("accessories")
+        .select("*")
+        .order("unlock_level", { ascending: true });
 
-            const { data: userAccessories } = await supabase
-                .from('user_accessories')
-                .select('accessory_id')
-                .eq('user_id', user.id)
-        
-            const unlockedIds = userAccessories?.map((ua) => ua.accessory_id) || [];
-            setUnlockedAccessoryIds(unlockedIds);
+      const { data: userAccessories } = await supabase
+        .from("user_accessories")
+        .select("accessory_id")
+        .eq("user_id", user.id);
 
-            const timelineData: TimelineNode[] = [];
-            const maxLevel = 30;
+      const unlockedIds = userAccessories?.map((ua) => ua.accessory_id) || [];
+      setUnlockedAccessoryIds(unlockedIds);
 
-            for (let level = 1; level <= maxLevel; level++) {
-                const accessory = accessories?.find((a) => a.unlock_level === level);
+      const timelineData: TimelineNode[] = [];
+      const maxLevel = 30;
 
-                timelineData.push({
-                    level, 
-                    hasReward: !!accessory,
-                    accessory: accessory,
-                    isUnlocked: level <= userLevel,
-                });
-            }
+      for (let level = 1; level <= maxLevel; level++) {
+        const accessory = accessories?.find((a) => a.unlock_level === level);
 
-            setTimeline(timelineData);
-        } catch (error) {
-            console.error('Error fetching timeline:', error)
-        } finally {
-            setLoading(false);
-        }
-    };
+        timelineData.push({
+          level,
+          hasReward: !!accessory,
+          accessory: accessory,
+          isUnlocked: level <= userLevel,
+        });
+      }
+
+      setTimeline(timelineData);
+    } catch (error) {
+      console.error("Error fetching timeline:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const renderTimelineNode = (node: TimelineNode, index: number) => {
     const isLast = index === timeline.length - 1;
@@ -87,7 +83,6 @@ export default function TimelineScreen() {
 
     return (
       <View key={node.level} style={styles.nodeContainer}>
-
         {index > 0 && (
           <View
             style={[
@@ -98,7 +93,6 @@ export default function TimelineScreen() {
         )}
 
         <View style={styles.nodeContent}>
-
           <View
             style={[
               styles.levelCircle,
@@ -115,7 +109,6 @@ export default function TimelineScreen() {
               {node.level}
             </Text>
           </View>
-
 
           <View
             style={[
@@ -189,9 +182,7 @@ export default function TimelineScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Your Path</Text>
-        <Text style={styles.headerSubtitle}>
-          Current Level: {currentLevel}
-        </Text>
+        <Text style={styles.headerSubtitle}>Current Level: {currentLevel}</Text>
       </View>
 
       <ScrollView
@@ -205,32 +196,31 @@ export default function TimelineScreen() {
   );
 }
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
   },
   header: {
     padding: 20,
     paddingTop: 60,
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
+    borderBottomColor: "#ddd",
   },
   headerTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 5,
   },
   headerSubtitle: {
     fontSize: 16,
-    color: '#666',
+    color: "#666",
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   scrollView: {
     flex: 1,
@@ -240,82 +230,82 @@ const styles = StyleSheet.create({
     paddingTop: 30,
   },
   nodeContainer: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   lineSegment: {
     width: 4,
     height: 40,
   },
   lineUnlocked: {
-    backgroundColor: '#179151',
+    backgroundColor: "#179151",
   },
   lineLocked: {
-    backgroundColor: '#E0E0E0',
+    backgroundColor: "#E0E0E0",
   },
   nodeContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
   },
   levelCircle: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     borderWidth: 3,
     marginRight: 15,
   },
   circleUnlocked: {
-    backgroundColor: '#179151',
-    borderColor: '#179151',
+    backgroundColor: "#179151",
+    borderColor: "#179151",
   },
   circleLocked: {
-    backgroundColor: '#F5F5F5',
-    borderColor: '#E0E0E0',
+    backgroundColor: "#F5F5F5",
+    borderColor: "#E0E0E0",
   },
   circleCurrent: {
-    borderColor: '#34C759',
+    borderColor: "#34C759",
     borderWidth: 4,
   },
   levelText: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   textUnlocked: {
-    color: 'white',
+    color: "white",
   },
   textLocked: {
-    color: '#999',
+    color: "#999",
   },
   rewardCard: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: 15,
     borderRadius: 12,
     minHeight: 70,
   },
   cardUnlocked: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderWidth: 2,
-    borderColor: '#007AFF',
-    shadowColor: '#000',
+    borderColor: "#007AFF",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
   cardLocked: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: "#F5F5F5",
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: "#E0E0E0",
   },
   cardEmpty: {
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderStyle: 'dashed',
+    borderColor: "#E0E0E0",
+    borderStyle: "dashed",
   },
   rewardIcon: {
     fontSize: 40,
@@ -326,38 +316,37 @@ const styles = StyleSheet.create({
   },
   rewardName: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
     marginBottom: 3,
   },
   rewardNameLocked: {
-    color: '#999',
+    color: "#999",
   },
   rewardType: {
     fontSize: 14,
-    color: '#666',
-    textTransform: 'capitalize',
+    color: "#666",
+    textTransform: "capitalize",
   },
   rewardTypeLocked: {
-    color: '#BBB',
+    color: "#BBB",
   },
   noRewardText: {
     fontSize: 14,
-    color: '#999',
-    fontStyle: 'italic',
+    color: "#999",
+    fontStyle: "italic",
   },
   unlockedBadge: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#34C759',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#34C759",
+    justifyContent: "center",
+    alignItems: "center",
   },
   unlockedText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });
-
