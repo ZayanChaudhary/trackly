@@ -15,6 +15,8 @@ import {
   getXPforNext,
   getXPRequiredForLevel,
 } from "../services/habitService";
+import { Image } from "react-native";
+import { getRankImage } from "../utils/rankImages";
 
 export default function ProfileScreen() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -230,7 +232,11 @@ function UnlockedAccessoriesList({ userId }: { userId: string }) {
     <View style={styles.accessoriesGrid}>
       {accessories.map((accessory) => (
         <View key={accessory.id} style={styles.accessoryCard}>
-          <Text style={styles.accessoryIcon}>{accessory.icon}</Text>
+          <Image
+            source={getRankImage(accessory.icon)}
+            style={styles.accessoryImage}
+            resizeMode="contain"
+          />
           <Text style={styles.accessoryName}>{accessory.name}</Text>
           <Text style={styles.accessoryLevel}>
             Level {accessory.unlock_level}
@@ -396,9 +402,10 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#7ed957",
   },
-  accessoryIcon: {
-    fontSize: 40,
-    marginBottom: 8,
+  accessoryImage: {
+    width: 60,
+    height: 60,
+    marginBottom: 12,
   },
   accessoryName: {
     fontSize: 14,

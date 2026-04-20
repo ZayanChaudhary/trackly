@@ -1,8 +1,10 @@
 import React, { useState, useEffect, use } from "react";
-import { View, Text, StyleSheet, ScrollView, Image } from "react-native";
+import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { supabase } from "../services/supabase";
 import { useFocusEffect } from "@react-navigation/native";
 import { Accessory, UserProfile } from "../types/habit";
+import { Image } from "react-native";
+import { getRankImage } from "../utils/rankImages";
 
 interface TimelineNode {
   level: number;
@@ -122,7 +124,15 @@ export default function TimelineScreen() {
           >
             {node.hasReward && node.accessory ? (
               <>
-                <Text style={styles.rewardIcon}>{node.accessory.icon}</Text>
+                {/*Display custom rank images*/}
+                <Image
+                  source={getRankImage(node.accessory.icon)}
+                  style={[
+                    styles.rewardImage,
+                    !node.isUnlocked && styles.rewardImageLocked,
+                  ]}
+                  resizeMode="contain"
+                />
                 <View style={styles.rewardInfo}>
                   <Text
                     style={[
@@ -138,12 +148,12 @@ export default function TimelineScreen() {
                       !node.isUnlocked && styles.rewardTypeLocked,
                     ]}
                   >
-                    {node.accessory.type}
+                    {node.accessory.description}
                   </Text>
                 </View>
                 {node.isUnlocked && (
                   <View style={styles.unlockedBadge}>
-                    <Text style={styles.unlockedText}>✓</Text>
+                    <Text style={styles.unlockedText}></Text>
                   </View>
                 )}
               </>
@@ -289,7 +299,7 @@ const styles = StyleSheet.create({
   cardUnlocked: {
     backgroundColor: "white",
     borderWidth: 2,
-    borderColor: "#007AFF",
+    borderColor: "#179151",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -349,4 +359,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
+  rewardImage: {
+    width: 50, 
+    height: 50, 
+    marginRight: 15,
+  },
+  rewardImageLocked: {
+    opacity: 0.3,
+  }
 });
