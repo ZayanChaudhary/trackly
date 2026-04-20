@@ -168,7 +168,8 @@ export default function ProfileScreen() {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Unlocked Accessories</Text>
+        <Text style={styles.sectionTitle}>Unlocked Ranks
+        </Text>
         <UnlockedAccessoriesList userId={profile.user_id} />
       </View>
     </ScrollView>

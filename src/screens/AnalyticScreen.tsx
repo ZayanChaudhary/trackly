@@ -17,6 +17,8 @@ import { generateAIInsights, AIInsight } from "../services/aiService";
 
 const screenWidth = Dimensions.get("window").width;
 
+
+
 interface AnalyticsData {
   totalCompletions: number;
   weeklyCompletions: number;

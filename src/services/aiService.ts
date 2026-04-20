@@ -9,6 +9,24 @@ export interface AIInsight {
   motivationalMessage: string;
 }
 
+let cachedInsight: AIInsight | null = null;
+
+async function fetchWithRetry(url: string, options: RequestInit, retries = 5): Promise<Response> {
+  for (let i = 0; i < retries; i++) {
+    const response = await fetch(url, options);
+
+    if ((response.status === 429 || response.status === 503) && i < retries - 1) {
+      const waitTime = 2000 * (i + 1);
+      console.log(`Rate limited, retrying in ${waitTime / 1000}s... (attempt ${i + 1}/${retries})`);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+      continue;
+    }
+
+    return response;
+  }
+  throw new Error('Max retries reached');
+}
+
 export const generateAIInsights = async (
   totalCompletions: number,
   weeklyCompletions: number,
@@ -16,13 +34,14 @@ export const generateAIInsights = async (
   longestStreak: number,
   topHabits: { title: string; count: number }[],
 ): Promise<AIInsight | null> => {
+
+  if (cachedInsight) return cachedInsight;
   try {
     if (!GEMINI_API_KEY) {
       console.error("Gemini API key not found in environment");
       return null;
     }
 
-    console.log("API KEY EXISTS:", !!GEMINI_API_KEY);
 
     const prompt = `You are a supportive habit-building coach analysing user progress data. Based on the following statistics, provide personalised insights:
 
@@ -45,7 +64,7 @@ export const generateAIInsights = async (
 
         Be specific, reference their actual numbers, and keep it positive and actionable.`;
 
-    const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+    const response = await fetchWithRetry(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -94,6 +113,7 @@ export const generateAIInsights = async (
     console.log("AI Response:", cleanedText);
 
     const insight: AIInsight = JSON.parse(cleanedText);
+    cachedInsight = insight;
     return insight;
   } catch (error: any) {
     console.log("AI Insights Error message:", error?.message);
