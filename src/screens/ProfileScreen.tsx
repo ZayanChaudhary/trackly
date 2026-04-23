@@ -23,11 +23,20 @@ export default function ProfileScreen() {
   const [loading, setLoading] = useState(true);
   const [totalHabits, setTotalHabits] = useState(0);
   const [totalCompletions, setTotalCompletions] = useState(0);
+  const [leaderboard, setLeaderboard] = useState<
+    {
+      display_name: string;
+      xp: number;
+      level: number;
+      isCurrentUser: boolean;
+    }[]
+  >([]);
 
   useFocusEffect(
     React.useCallback(() => {
       fetchProfile();
       fetchStats();
+      fetchLeaderboard();
     }, []),
   );
 
@@ -79,6 +88,29 @@ export default function ProfileScreen() {
       setTotalCompletions(completionsCount || 0);
     } catch (error) {
       console.error("Error fetching stats:", error);
+    }
+  };
+
+  const fetchLeaderboard = async () => {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      const { data } = await supabase
+        .from("user_profiles")
+        .select("user_id, display_name, level, xp")
+        .order("xp", { ascending: false })
+        .limit(10);
+
+      const mapped = (data || []).map((p) => ({
+        display_name: p.display_name || "Anonymous",
+        level: p.level,
+        xp: p.xp,
+        isCurrentUser: p.user_id === user?.id,
+      }));
+      setLeaderboard(mapped);
+    } catch (e) {
+      console.error("Leaderboard error:", e);
     }
   };
 
@@ -159,19 +191,47 @@ export default function ProfileScreen() {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Achievements</Text>
-        <View style={styles.achievementsPlaceholder}>
-          <Text style={styles.placeholderText}>
-            Complete more habits to unlock achievements!
-          </Text>
-        </View>
+        <Text style={styles.sectionTitle}>Unlocked Ranks</Text>
+        <UnlockedAccessoriesList userId={profile.user_id} />
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Unlocked Ranks
-        </Text>
-        <UnlockedAccessoriesList userId={profile.user_id} />
+        <Text style={styles.sectionTitle}>🏆 Leaderboard</Text>
+        {leaderboard.map((entry, index) => (
+          <View
+            key={index}
+            style={[
+              styles.leaderboardRow,
+              entry.isCurrentUser && styles.leaderboardRowHighlight,
+            ]}
+          >
+            <Text
+              style={[
+                styles.leaderboardRank,
+                index < 3 && {
+                  color: ["#FFD700", "#C0C0C0", "#CD7F32"][index],
+                },
+              ]}
+            >
+              #{index + 1}
+            </Text>
+            <View style={styles.leaderboardAvatar}>
+              <Text style={styles.leaderboardAvatarText}>
+                {entry.display_name.charAt(0).toUpperCase()}
+              </Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.leaderboardName}>
+                {entry.display_name}
+                {entry.isCurrentUser ? " (you)" : ""}
+              </Text>
+              <Text style={styles.leaderboardLevel}>Level {entry.level}</Text>
+            </View>
+            <Text style={styles.leaderboardXP}>{entry.xp} XP</Text>
+          </View>
+        ))}
       </View>
+
     </ScrollView>
   );
 }
@@ -348,7 +408,7 @@ const styles = StyleSheet.create({
   statsGrid: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
+    paddingHorizontal: 10,
     marginBottom: 20,
   },
   statCard: {
@@ -419,4 +479,50 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#666",
   },
+  leaderboardRow: {
+  flexDirection: "row",
+  alignItems: "center",
+  backgroundColor: "white",
+  padding: 12,
+  borderRadius: 12,
+  marginBottom: 8,
+},
+leaderboardRowHighlight: {
+  borderWidth: 2,
+  borderColor: "#7ed957",
+},
+leaderboardRank: {
+  width: 32,
+  fontWeight: "bold",
+  fontSize: 14,
+  color: "#8e8e93",
+},
+leaderboardAvatar: {
+  width: 36,
+  height: 36,
+  borderRadius: 18,
+  backgroundColor: "#1A1A1A",
+  justifyContent: "center",
+  alignItems: "center",
+  marginRight: 10,
+},
+leaderboardAvatarText: {
+  color: "white",
+  fontWeight: "bold",
+  fontSize: 14,
+},
+leaderboardName: {
+  fontWeight: "600",
+  fontSize: 14,
+  color: "#1A1A1A",
+},
+leaderboardLevel: {
+  fontSize: 12,
+  color: "#8e8e93",
+},
+leaderboardXP: {
+  fontWeight: "bold",
+  color: "#7ed957",
+  fontSize: 14,
+},
 });
