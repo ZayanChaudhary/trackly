@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -17,6 +17,40 @@ import { Ionicons } from "@expo/vector-icons";
 import { Dimensions } from "react-native";
 
 const screenWidth = Dimensions.get("window").width;
+
+function SkeletonCard() {
+  const shimmer = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmer, {
+          toValue: 1,
+          duration: 900,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shimmer, {
+          toValue: 0,
+          duration: 900,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
+  }, []);
+
+  const opacity = shimmer.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.3, 0.7],
+  });
+
+  return (
+    <Animated.View style={[styles.habitCard, { opacity }]}>
+      <View style={styles.skeletonTitle} />
+      <View style={styles.skeletonSubtitle} />
+      <View style={styles.skeletonButton} />
+    </Animated.View>
+  );
+}
 
 export default function HabitsScreen({ navigation }: any) {
   const [habits, setHabits] = useState<Habit[]>([]);
@@ -261,21 +295,30 @@ export default function HabitsScreen({ navigation }: any) {
         </View>
       </View>
 
-      <FlatList
-        data={filteredHabits}
-        renderItem={renderHabit}
-        keyExtractor={(item) => item.id}
-        ListHeaderComponent={renderHeader}
-        ListEmptyComponent={renderEmptyState}
-        contentContainerStyle={[
-          styles.listContainer,
-          filteredHabits.length === 0 && styles.listContainerEmpty,
-        ]}
-        refreshControl={
-          <RefreshControl refreshing={loading} onRefresh={fetchHabits} />
-        }
-        showsVerticalScrollIndicator={false}
-      />
+      {loading ? ( // ← ADD THIS
+        <View style={{ paddingHorizontal: 20, paddingTop: 20 }}>
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </View>
+      ) : (
+        <FlatList
+          data={filteredHabits}
+          renderItem={renderHabit}
+          keyExtractor={(item) => item.id}
+          ListHeaderComponent={renderHeader}
+          ListEmptyComponent={renderEmptyState}
+          contentContainerStyle={[
+            styles.listContainer,
+            filteredHabits.length === 0 && styles.listContainerEmpty,
+          ]}
+          refreshControl={
+            <RefreshControl refreshing={loading} onRefresh={fetchHabits} />
+          }
+          showsVerticalScrollIndicator={false}
+        />
+      )}
+
       {xpPopText !== "" && (
         <Animated.View
           pointerEvents="none"
@@ -514,5 +557,25 @@ const styles = StyleSheet.create({
     color: "#7ed957",
     fontWeight: "bold",
     fontSize: 16,
+  },
+  skeletonTitle: {
+    height: 18,
+    backgroundColor: "#E0E0E0",
+    borderRadius: 6,
+    marginBottom: 12,
+    width: "60%",
+  },
+  skeletonSubtitle: {
+    height: 14,
+    backgroundColor: "#E0E0E0",
+    borderRadius: 6,
+    marginBottom: 16,
+    width: "40%",
+  },
+  skeletonButton: {
+    height: 44,
+    backgroundColor: "#E0E0E0",
+    borderRadius: 12,
+    width: "100%",
   },
 });
