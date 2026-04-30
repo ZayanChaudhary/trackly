@@ -142,7 +142,7 @@ export default function ProfileScreen() {
 
   const currentXP = profile.xp;
   const neededXP = getXPRequiredForLevel(profile.level);
-  const xpProgress = (profile.xp / 100) * 100;
+  const xpProgress = Math.min((currentXP / neededXP) * 100, 100);
 
   return (
     <ScrollView>
