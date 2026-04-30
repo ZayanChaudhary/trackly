@@ -17,8 +17,6 @@ import { generateAIInsights, AIInsight } from "../services/aiService";
 
 const screenWidth = Dimensions.get("window").width;
 
-
-
 interface AnalyticsData {
   totalCompletions: number;
   weeklyCompletions: number;
@@ -82,6 +80,20 @@ export default function AnalyticScreen() {
     } finally {
       setGeneratingInsight(false);
     }
+  };
+
+  const getStaticInsights = () => {
+    if (!data) return null;
+
+    const bestDayIndex = data.dailyData.indexOf(Math.max(...data.dailyData));
+    const worstDayIndex = data.dailyData.indexOf(Math.min(...data.dailyData));
+    const mostConsistent = data.topHabits[0]?.title || null;
+
+    return {
+      bestDay: data.labels[bestDayIndex] || "N/A",
+      worstDay: data.labels[worstDayIndex] || "N/A",
+      mostConsistent,
+    };
   };
 
   const fetchAnalytics = async () => {
@@ -267,8 +279,53 @@ export default function AnalyticScreen() {
             chartConfig={chartConfig}
             bezier
             style={styles.chart}
+            fromZero={true}
+            segments={Math.max(...(data?.dailyData || [1]))}
           />
         </View>
+        {data &&
+          (() => {
+            const insights = getStaticInsights();
+            if (!insights) return null;
+            return (
+              <View style={styles.chartSection}>
+                <Text style={styles.sectionTitle}>Quick Insights</Text>
+                <View style={styles.insightRow}>
+                  <View
+                    style={[styles.insightChip, { borderLeftColor: "#7ed957" }]}
+                  >
+                    <Text style={styles.insightChipLabel}>📈 Best Day</Text>
+                    <Text style={styles.insightChipValue}>
+                      {insights.bestDay}
+                    </Text>
+                  </View>
+                  <View
+                    style={[styles.insightChip, { borderLeftColor: "#FF3B30" }]}
+                  >
+                    <Text style={styles.insightChipLabel}>📉 Worst Day</Text>
+                    <Text style={styles.insightChipValue}>
+                      {insights.worstDay}
+                    </Text>
+                  </View>
+                </View>
+                {insights.mostConsistent && (
+                  <View
+                    style={[
+                      styles.insightChipFull,
+                      { borderLeftColor: "#FF9500" },
+                    ]}
+                  >
+                    <Text style={styles.insightChipLabel}>
+                      🏆 Most Consistent Habit
+                    </Text>
+                    <Text style={styles.insightChipValue}>
+                      {insights.mostConsistent}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            );
+          })()}
       </Animated.View>
     </ScrollView>
   );
@@ -351,4 +408,40 @@ const styles = StyleSheet.create({
   chart: { borderRadius: 16, marginLeft: -10 },
   insightsLoading: { padding: 20, alignItems: "center" },
   insightsLoadingText: { marginTop: 8, color: "#8e8e93" },
+
+  insightRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 10,
+  },
+  insightChip: {
+    width: "48%",
+    backgroundColor: "white",
+    padding: 14,
+    borderRadius: 12,
+    borderLeftWidth: 4,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    elevation: 2,
+  },
+  insightChipFull: {
+    backgroundColor: "white",
+    padding: 14,
+    borderRadius: 12,
+    borderLeftWidth: 4,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    elevation: 2,
+  },
+  insightChipLabel: {
+    fontSize: 11,
+    color: "#8e8e93",
+    textTransform: "uppercase",
+    marginBottom: 4,
+  },
+  insightChipValue: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#1A1A1A",
+  },
 });
