@@ -28,6 +28,7 @@ export default function ProfileScreen() {
       display_name: string;
       xp: number;
       level: number;
+      dailyCount: number;
       isCurrentUser: boolean;
     }[]
   >([]);
@@ -96,18 +97,22 @@ export default function ProfileScreen() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      const { data } = await supabase
+
+      const { data: profiles } = await supabase
         .from("user_profiles")
         .select("user_id, display_name, level, xp")
         .order("xp", { ascending: false })
         .limit(10);
 
-      const mapped = (data || []).map((p) => ({
+      const mapped = (profiles || []).map((p) => ({
         display_name: p.display_name || "Anonymous",
         level: p.level,
         xp: p.xp,
+        dailyCount: p.xp,
         isCurrentUser: p.user_id === user?.id,
       }));
+
+      setLeaderboard(mapped);
       setLeaderboard(mapped);
     } catch (e) {
       console.error("Leaderboard error:", e);
@@ -196,7 +201,7 @@ export default function ProfileScreen() {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>🏆 Leaderboard</Text>
+        <Text style={styles.sectionTitle}>Daily Leaderboard</Text>
         {leaderboard.map((entry, index) => (
           <View
             key={index}
@@ -231,7 +236,6 @@ export default function ProfileScreen() {
           </View>
         ))}
       </View>
-
     </ScrollView>
   );
 }
@@ -480,49 +484,49 @@ const styles = StyleSheet.create({
     color: "#666",
   },
   leaderboardRow: {
-  flexDirection: "row",
-  alignItems: "center",
-  backgroundColor: "white",
-  padding: 12,
-  borderRadius: 12,
-  marginBottom: 8,
-},
-leaderboardRowHighlight: {
-  borderWidth: 2,
-  borderColor: "#7ed957",
-},
-leaderboardRank: {
-  width: 32,
-  fontWeight: "bold",
-  fontSize: 14,
-  color: "#8e8e93",
-},
-leaderboardAvatar: {
-  width: 36,
-  height: 36,
-  borderRadius: 18,
-  backgroundColor: "#1A1A1A",
-  justifyContent: "center",
-  alignItems: "center",
-  marginRight: 10,
-},
-leaderboardAvatarText: {
-  color: "white",
-  fontWeight: "bold",
-  fontSize: 14,
-},
-leaderboardName: {
-  fontWeight: "600",
-  fontSize: 14,
-  color: "#1A1A1A",
-},
-leaderboardLevel: {
-  fontSize: 12,
-  color: "#8e8e93",
-},
-leaderboardXP: {
-  fontWeight: "bold",
-  color: "#7ed957",
-  fontSize: 14,
-},
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "white",
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  leaderboardRowHighlight: {
+    borderWidth: 2,
+    borderColor: "#7ed957",
+  },
+  leaderboardRank: {
+    width: 32,
+    fontWeight: "bold",
+    fontSize: 14,
+    color: "#8e8e93",
+  },
+  leaderboardAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#1A1A1A",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 10,
+  },
+  leaderboardAvatarText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 14,
+  },
+  leaderboardName: {
+    fontWeight: "600",
+    fontSize: 14,
+    color: "#1A1A1A",
+  },
+  leaderboardLevel: {
+    fontSize: 12,
+    color: "#8e8e93",
+  },
+  leaderboardXP: {
+    fontWeight: "bold",
+    color: "#7ed957",
+    fontSize: 14,
+  },
 });
