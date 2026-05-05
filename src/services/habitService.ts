@@ -37,12 +37,7 @@ export const getCurrentLevelProgress = (totalXP: number): { currentXP: number; n
     const currentXP = totalXP - xpForPreviousLevels;
     const neededXP = getXPRequiredForLevel(currentLevel);
 
-    console.log('=== XP Progress ===');
-    console.log('Total XP:', totalXP);
-    console.log('Current Level:', currentLevel);
-    console.log('XP for previous levels:', xpForPreviousLevels);
-    console.log('Current XP in this level:', currentXP);
-    console.log('XP needed for next level:', neededXP);
+
 
     return { currentXP, neededXP}
 }
@@ -82,7 +77,7 @@ export const calcNewStreak = async (
         .order('completed_at', { ascending: false })
         .limit(2)
     
-    console.log('Logs found:', logs);
+
 
     if (!logs || logs.length === 0) {
         console.log('First completion');
@@ -266,7 +261,7 @@ export const completeHabit = async (
 
         return {
         success: true,
-        message: `+${xpEarned} XP! 🎉`,
+        message: `+${xpEarned} XP!`,
         xpEarned,
         newLevel,
         leveledUp,

@@ -7,7 +7,21 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "test": "jest"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "transformIgnorePatterns": [
+    "node_modules/(?!(react-native|@react-native|expo|@expo)/)"
+    ], 
+     "moduleNameMapper": {
+    "react-native-url-polyfill/auto": "<rootDir>/src/__mocks__/fileMock.js",
+    "@react-native-async-storage/async-storage": "<rootDir>/src/__mocks__/fileMock.js",
+    "react-native": "<rootDir>/src/__mocks__/fileMock.js",
+    "^./supabase$": "<rootDir>/src/__mocks__/supabase.js"
+  }
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
@@ -30,8 +44,11 @@
     "victory-native": "^41.20.2"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "@types/react": "~19.1.0",
     "@types/react-native": "^0.72.8",
+    "jest": "^30.3.0",
+    "ts-jest": "^29.4.9",
     "typescript": "~5.9.2"
   },
   "private": true
