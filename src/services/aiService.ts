@@ -9,8 +9,11 @@ export interface AIInsight {
   motivationalMessage: string;
 }
 
+// caching implementation
 let cachedInsight: AIInsight | null = null;
 
+
+// retry logic: reduces load on system and fails after tiring system out
 async function fetchWithRetry(url: string, options: RequestInit, retries = 5): Promise<Response> {
   for (let i = 0; i < retries; i++) {
     const response = await fetch(url, options);
@@ -43,6 +46,7 @@ export const generateAIInsights = async (
     }
 
 
+    // prompt engineering: allows for a wider variety of answers
     const prompt = `You are a supportive habit-building coach analysing user progress data. Based on the following statistics, provide personalised insights:
 
         **User Statistics:**
@@ -83,6 +87,7 @@ export const generateAIInsights = async (
       }),
     });
 
+    // error handling: ensures status code is returned 
     if (!response.ok) {
       const errorData = await response.json();
       console.error("Gemini API error:", errorData);
@@ -105,6 +110,7 @@ export const generateAIInsights = async (
       throw new Error("No response from Gemini API");
     }
 
+    // format returned text from API
     const cleanedText = generatedText
       .replace(/```json\n?/g, "")
       .replace(/```\n?/g, "")

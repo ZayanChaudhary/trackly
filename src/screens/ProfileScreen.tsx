@@ -41,6 +41,7 @@ export default function ProfileScreen() {
     }, []),
   );
 
+  // fetch profile from user_profiles in database
   const fetchProfile = async () => {
     try {
       const {
@@ -49,6 +50,7 @@ export default function ProfileScreen() {
 
       if (!user) return;
 
+      // return user id
       const { data, error } = await supabase
         .from("user_profiles")
         .select("*")
@@ -67,6 +69,7 @@ export default function ProfileScreen() {
     }
   };
 
+  // fetching user information from database
   const fetchStats = async () => {
     try {
       const {
@@ -75,11 +78,13 @@ export default function ProfileScreen() {
 
       if (!user) return;
 
+      //  number of habits returned
       const { count: habitsCount } = await supabase
         .from("habits")
         .select("*", { count: "exact", head: true })
         .eq("user_id", user.id);
 
+      // number of completed habits returned
       const { count: completionsCount } = await supabase
         .from("habit_logs")
         .select("*", { count: "exact", head: true })
@@ -92,12 +97,14 @@ export default function ProfileScreen() {
     }
   };
 
+  // leaderboard logic
   const fetchLeaderboard = async () => {
     try {
       const {
         data: { user },
       } = await supabase.auth.getUser();
 
+      // fetch and display all users in ascending order
       const { data: profiles } = await supabase
         .from("user_profiles")
         .select("user_id, display_name, level, xp")
@@ -119,6 +126,7 @@ export default function ProfileScreen() {
     }
   };
 
+  // sign out logic
   const handleSignOut = async () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
       { text: "Cancel", style: "cancel" },

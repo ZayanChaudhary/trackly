@@ -17,6 +17,7 @@ import { generateAIInsights, AIInsight } from "../services/aiService";
 
 const screenWidth = Dimensions.get("window").width;
 
+// Interface for Analytics model
 interface AnalyticsData {
   totalCompletions: number;
   weeklyCompletions: number;
@@ -85,6 +86,7 @@ export default function AnalyticScreen() {
   const getStaticInsights = () => {
     if (!data) return null;
 
+    // Static Analytics
     const bestDayIndex = data.dailyData.indexOf(Math.max(...data.dailyData));
     const worstDayIndex = data.dailyData.indexOf(Math.min(...data.dailyData));
     const mostConsistent = data.topHabits[0]?.title || null;
@@ -103,7 +105,7 @@ export default function AnalyticScreen() {
       } = await supabase.auth.getUser();
       if (!user) return;
 
-      // 1. Fetch data from Supabase
+      // Fetch data from Supabase
       const [{ data: logs }, { data: habits }] = await Promise.all([
         supabase
           .from("habit_logs")
@@ -120,6 +122,7 @@ export default function AnalyticScreen() {
         return;
       }
 
+      // Dynamic Logic for LineChart
       const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
       const dailyData: number[] = [];
       const labels: string[] = [];

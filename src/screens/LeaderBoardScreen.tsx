@@ -38,9 +38,11 @@ export default function LeaderBoardScreen() {
       } = await supabase.auth.getUser();
       setCurrentUserId(user?.id ?? null);
 
+      // fetch data from the database
       const { data, error } = await supabase
         .from("user_profiles")
         .select("user_id, display_name, level, xp")
+        //ascending order
         .order("xp", { ascending: false })
         .limit(50);
 
@@ -62,6 +64,7 @@ export default function LeaderBoardScreen() {
     }
   };
 
+  // medal colour returned based on position
   const getMedalColour = (index: number) => {
     if (index === 0) return "#FFD700";
     if (index === 1) return "#C0C0C0";
@@ -69,6 +72,7 @@ export default function LeaderBoardScreen() {
     return "#8e8e93";
   };
 
+  // loading page logic
   if (loading)
     return (
       <View style={styles.loadingContainer}>

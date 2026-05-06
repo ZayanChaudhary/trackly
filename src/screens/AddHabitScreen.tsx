@@ -17,6 +17,7 @@ export default function AddHabitScreen({ navigation }: any) {
   const [frequency, setFrequency] = useState<"daily" | "weekly">("daily");
   const [loading, setLoading] = useState(false);
 
+  // controller for adding habit
   const handleAddHabit = async () => {
     if (!title.trim()) {
       Alert.alert("Error", "Please enter a habit title");
@@ -30,6 +31,7 @@ export default function AddHabitScreen({ navigation }: any) {
         data: { user },
       } = await supabase.auth.getUser();
 
+      // handles 'guests'
       if (!user) {
         Alert.alert("Error", "You must be logged in");
         return;
@@ -62,6 +64,7 @@ export default function AddHabitScreen({ navigation }: any) {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
+      
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.cancelButton}>Cancel</Text>

@@ -18,6 +18,7 @@ import { Dimensions } from "react-native";
 
 const screenWidth = Dimensions.get("window").width;
 
+// Skeleton Loader Implementation
 function SkeletonCard() {
   const shimmer = useRef(new Animated.Value(0)).current;
 
@@ -71,14 +72,17 @@ export default function HabitsScreen({ navigation }: any) {
     }, []),
   );
 
+
   const fetchHabits = async () => {
     try {
+      // Fetch user validity from database
       const {
         data: { user },
       } = await supabase.auth.getUser();
 
       if (!user) return;
 
+      // Fetch user habits from database
       const { data, error } = await supabase
         .from("habits")
         .select("*")
@@ -97,6 +101,7 @@ export default function HabitsScreen({ navigation }: any) {
     }
   };
 
+  // Dynamic username greeting message
   const fetchUserName = async () => {
     try {
       const {
@@ -119,6 +124,7 @@ export default function HabitsScreen({ navigation }: any) {
     }
   };
 
+  // XP Animation Logic
   const triggerXPAnimation = (xpEarned: number, pageY: number) => {
     setXpPopText(`+${xpEarned} XP`);
     setPopPosition({ x: screenWidth / 2 - 40, y: pageY - 60 });
@@ -140,10 +146,12 @@ export default function HabitsScreen({ navigation }: any) {
     ]).start();
   };
 
+  // Habit Completion Logic
   const handleCompleteHabit = async (habit: Habit, pageY: number) => {
     const { completeHabit } = require("../services/habitService");
     const result = await completeHabit(habit.id, habit.frequency, habit.streak);
-
+    
+    // Successful habit completion (when the habit isn't completed on a new day)
     if (result.success) {
       triggerXPAnimation(result.xpEarned, pageY);
       if (result.leveledUp) {
@@ -154,6 +162,7 @@ export default function HabitsScreen({ navigation }: any) {
       }
       fetchHabits();
     } else {
+    // Unsuccessful habit completion (when the habit is already completed on a new day)
       Alert.alert("Info", result.message);
     }
   };
@@ -163,6 +172,7 @@ export default function HabitsScreen({ navigation }: any) {
     return habit.frequency === selectedFilter;
   });
 
+  // filters habits from daily and weekly basis
   const dailyHabits = habits.filter((h) => h.frequency === "daily");
   const weeklyHabits = habits.filter((h) => h.frequency === "weekly");
 
@@ -295,7 +305,7 @@ export default function HabitsScreen({ navigation }: any) {
         </View>
       </View>
 
-      {loading ? ( // ← ADD THIS
+      {loading ? ( 
         <View style={{ paddingHorizontal: 20, paddingTop: 20 }}>
           <SkeletonCard />
           <SkeletonCard />

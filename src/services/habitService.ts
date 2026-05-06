@@ -1,11 +1,12 @@
 import { supabase } from "./supabase";
 
-
+// returns XP required for next level
 export const getXPRequiredForLevel = (level: number): number => {
 
     return 100 * level;
 }
 
+// returns current level
 export const calcLevel = (totalXP: number): number => {
   let level = 1;
   let xpUsed = 0;
@@ -20,11 +21,13 @@ export const calcLevel = (totalXP: number): number => {
   return level;
 };
 
+// returns upper limit of next level XP
 export const getXPforNext = (currentXP: number): number => {
     const currentLevel = calcLevel(currentXP);
     return getXPRequiredForLevel(currentLevel);
 };
 
+// returns current user progress
 export const getCurrentLevelProgress = (totalXP: number): { currentXP: number; neededXP: number} => {
     const currentLevel = calcLevel(totalXP);
 
@@ -42,6 +45,7 @@ export const getCurrentLevelProgress = (totalXP: number): { currentXP: number; n
     return { currentXP, neededXP}
 }
 
+// habit checking logic
 export const checkCompleteToday = async (
     habitId: string,
     frequency: 'daily' | 'weekly'
@@ -55,6 +59,7 @@ export const checkCompleteToday = async (
         startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     }
 
+    // fetches data from the database
     const { data, error } = await supabase
         .from('habit_logs')
         .select('*')
@@ -65,6 +70,7 @@ export const checkCompleteToday = async (
     return !!data;
 };
 
+// streak implementation and manipulation on other algorithms
 export const calcNewStreak = async (
     habitId: string,
     frequency: 'daily' | 'weekly',
@@ -114,6 +120,7 @@ export const calcNewStreak = async (
     }
 };
 
+// returns XP earned, affected by streaks etc. 
 export const calcXPearned = (streak: number): number => {
     
     let minXP = 8;
@@ -149,6 +156,7 @@ export interface CompleteHabitResult {
     newStreak?: number;
 }
 
+// full implementation for single habit completion
 export const completeHabit = async (
     habitId: string,
     frequency: 'daily' | 'weekly',
@@ -174,7 +182,7 @@ export const completeHabit = async (
             };
         }
 
-
+        // calculating new streak logic
         const newStreak = await calcNewStreak(
         habitId,
         frequency,
@@ -184,7 +192,7 @@ export const completeHabit = async (
 
         const xpEarned = calcXPearned(newStreak);
 
-
+        // inputting new record into database
         const { error: logError } = await supabase.from('habit_logs').insert({
         habit_id: habitId,
         user_id: user.id,
@@ -195,6 +203,7 @@ export const completeHabit = async (
         if (logError) throw logError;
 
 
+        // updating streak and habit logic within database
         const { error: habitError } = await supabase
         .from('habits')
         .update({
@@ -273,6 +282,7 @@ export const completeHabit = async (
         }
     };
 
+    // fetches unlocked accessories
     const unlockAccessoriesForLevel = async (
         userId: string,
         level: number

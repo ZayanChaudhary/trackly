@@ -27,6 +27,7 @@ export default function TimelineScreen() {
     }, []),
   );
 
+  // fetching data for timeline
   const fetchTimelineData = async () => {
     try {
       const {
@@ -35,20 +36,24 @@ export default function TimelineScreen() {
 
       if (!user) return;
 
+      // fetch user data from database
       const { data: profile } = await supabase
         .from("user_profiles")
         .select("level")
         .eq("user_id", user.id)
         .single();
 
+      // fetch user level
       const userLevel = profile?.level || 1;
       setCurrentLevel(userLevel);
 
+      // return list of available accessories
       const { data: accessories } = await supabase
         .from("accessories")
         .select("*")
         .order("unlock_level", { ascending: true });
 
+      // return list of unlocked accessories
       const { data: userAccessories } = await supabase
         .from("user_accessories")
         .select("accessory_id")
@@ -58,6 +63,7 @@ export default function TimelineScreen() {
       setUnlockedAccessoryIds(unlockedIds);
 
       const timelineData: TimelineNode[] = [];
+      // 30 levels 
       const maxLevel = 30;
 
       for (let level = 1; level <= maxLevel; level++) {

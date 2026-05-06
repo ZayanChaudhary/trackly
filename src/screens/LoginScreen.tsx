@@ -29,12 +29,16 @@ export default function LoginScreen() {
     }).start();
   }, []);
 
+  // RObust error handling
   const handleAuth = async () => {
+
+    // typical error case: incomplete fields
     if (!email || !password) {
       Alert.alert("Error", "Please fill in all fields");
       return;
     }
 
+    // typical error case: incomplete username
     if (isSignUp && !name.trim()) {
       Alert.alert("Error", "Please enter your name");
       return;
